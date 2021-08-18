@@ -411,7 +411,7 @@ void ClassDB::_add_class2(const StringName &p_class, const StringName &p_inherit
 	ti.api = current_api;
 
 	if (ti.inherits) {
-		ERR_FAIL_COND(!classes.has(ti.inherits)); //it MUST be registered.
+		ERR_FAIL_COND_MSG(!classes.has(ti.inherits), "Class \"" + ti.inherits + "\" is not registered."); //it MUST be registered.
 		ti.inherits_ptr = &classes[ti.inherits];
 
 	} else {
@@ -562,12 +562,9 @@ void ClassDB::bind_integer_constant(const StringName &p_class, const StringName 
 
 	ClassInfo *type = classes.getptr(p_class);
 
-	ERR_FAIL_COND(!type);
+	ERR_FAIL_COND_MSG(!type, "Cannot find class \"" + p_class + "\".");
 
-	if (type->constant_map.has(p_name)) {
-		ERR_FAIL();
-	}
-
+	ERR_FAIL_COND_MSG(type->constant_map.has(p_name), "Class \"" + p_class + "\" already has integer constant \"" + p_name + "\".");
 	type->constant_map[p_name] = p_constant;
 
 	String enum_name = p_enum;
@@ -776,7 +773,7 @@ void ClassDB::add_signal(const StringName &p_class, const MethodInfo &p_signal) 
 	OBJTYPE_WLOCK;
 
 	ClassInfo *type = classes.getptr(p_class);
-	ERR_FAIL_COND(!type);
+	ERR_FAIL_COND_MSG(!type, "Cannot find class \"" + p_class + "\".");
 
 	StringName sname = p_signal.name;
 
@@ -795,7 +792,7 @@ void ClassDB::get_signal_list(const StringName &p_class, List<MethodInfo> *p_sig
 	OBJTYPE_RLOCK;
 
 	ClassInfo *type = classes.getptr(p_class);
-	ERR_FAIL_COND(!type);
+	ERR_FAIL_COND_MSG(!type, "Cannot find class \"" + p_class + "\".");
 
 	ClassInfo *check = type;
 
@@ -863,7 +860,7 @@ void ClassDB::add_property_group(const StringName &p_class, const String &p_name
 void ClassDB::add_property_subgroup(const StringName &p_class, const String &p_name, const String &p_prefix, int p_indent_depth) {
 	OBJTYPE_WLOCK;
 	ClassInfo *type = classes.getptr(p_class);
-	ERR_FAIL_COND(!type);
+	ERR_FAIL_COND_MSG(!type, "Cannot find class \"" + p_class + "\".");
 
 	String prefix = p_prefix;
 	if (p_indent_depth > 0) {
@@ -880,7 +877,7 @@ void ClassDB::add_property_array_count(const StringName &p_class, const String &
 void ClassDB::add_property_array(const StringName &p_class, const StringName &p_path, const String &p_array_element_prefix) {
 	OBJTYPE_WLOCK;
 	ClassInfo *type = classes.getptr(p_class);
-	ERR_FAIL_COND(!type);
+	ERR_FAIL_COND_MSG(!type, "Cannot find class \"" + p_class + "\".");
 
 	type->property_list.push_back(PropertyInfo(Variant::NIL, p_path, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_ARRAY, p_array_element_prefix));
 }
@@ -891,7 +888,7 @@ void ClassDB::add_property(const StringName &p_class, const PropertyInfo &p_pinf
 	ClassInfo *type = classes.getptr(p_class);
 	lock.read_unlock();
 
-	ERR_FAIL_COND(!type);
+	ERR_FAIL_COND_MSG(!type, "Cannot find class \"" + p_class + "\".");
 
 	MethodBind *mb_set = nullptr;
 	if (p_setter) {
@@ -1208,8 +1205,8 @@ void ClassDB::set_method_flags(const StringName &p_class, const StringName &p_me
 	OBJTYPE_WLOCK;
 	ClassInfo *type = classes.getptr(p_class);
 	ClassInfo *check = type;
-	ERR_FAIL_COND(!check);
-	ERR_FAIL_COND(!check->method_map.has(p_method));
+	ERR_FAIL_COND_MSG(!type, "Cannot find class \"" + p_class + "\".");
+	ERR_FAIL_COND_MSG(!check->method_map.has(p_method), "Cannot find method \"" + p_method + "\" in class \"" + p_class + "\".");
 	check->method_map[p_method]->set_hint_flags(p_flags);
 }
 
@@ -1388,6 +1385,15 @@ bool ClassDB::is_class_exposed(const StringName &p_class) {
 	return ti->exposed;
 }
 
+StringName ClassDB::get_category(const StringName &p_node) {
+	ERR_FAIL_COND_V(!classes.has(p_node), StringName());
+#ifdef DEBUG_ENABLED
+	return classes[p_node].category;
+#else
+	return StringName();
+#endif
+}
+
 void ClassDB::add_resource_base_extension(const StringName &p_extension, const StringName &p_class) {
 	if (resource_base_extensions.has(p_extension)) {
 		return;
@@ -1518,7 +1524,7 @@ void ClassDB::register_extension_class(ObjectNativeExtension *p_extension) {
 }
 
 void ClassDB::unregister_extension_class(const StringName &p_class) {
-	ERR_FAIL_COND(!classes.has(p_class));
+	ERR_FAIL_COND_MSG(!classes.has(p_class), "Cannot find class " + p_class + " to unregister it.");
 	classes.erase(p_class);
 }
 
