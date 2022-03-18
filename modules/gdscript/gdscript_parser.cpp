@@ -115,6 +115,7 @@ GDScriptParser::GDScriptParser() {
 	register_annotation(MethodInfo("@onready"), AnnotationInfo::VARIABLE, &GDScriptParser::onready_annotation);
 	// Export annotations.
 	register_annotation(MethodInfo("@export"), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_NONE, Variant::NIL>);
+	register_annotation(MethodInfo("@export_action", { Variant::STRING, "icon" }), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_NONE, Variant::CALLABLE>, 1, true);
 	register_annotation(MethodInfo("@export_enum", { Variant::STRING, "names" }), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_ENUM, Variant::INT>, 0, true);
 	register_annotation(MethodInfo("@export_file", { Variant::STRING, "filter" }), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_FILE, Variant::STRING>, 1, true);
 	register_annotation(MethodInfo("@export_dir"), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_DIR, Variant::STRING>);
@@ -3516,7 +3517,7 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 	// This is called after the analyzer is done finding the type, so this should be set here.
 	DataType export_type = variable->get_datatype();
 
-	if (p_annotation->name == SNAME("@export")) {
+	if (p_annotation->name == SNAME("@export") || p_annotation->name == SNAME("@export_action")) {
 		if (variable->datatype_specifier == nullptr && variable->initializer == nullptr) {
 			push_error(R"(Cannot use simple "@export" annotation with variable without type or initializer, since type can't be inferred.)", p_annotation);
 			return false;
@@ -3582,6 +3583,31 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 			variable->export_info.hint_string = hint_prefix + ":" + variable->export_info.hint_string;
 			variable->export_info.type = Variant::ARRAY;
 		}
+
+		if (p_annotation->name == SNAME("@export_action")) {
+			variable->export_info.hint_string = "action";
+			if (!p_annotation->resolved_arguments.is_empty()) { // Icon Name
+				variable->export_info.hint_string += (String)p_annotation->resolved_arguments[0];
+			}
+			variable->export_info.usage = PROPERTY_USAGE_EDITOR;
+			if (variable->export_info.type == Variant::Type::CALLABLE) {
+				if (!this->is_tool()) {
+					push_error(R"(Exported actions only work in tool scripts.)", p_annotation);
+				}
+			} else {
+				push_error(R"(Exported actions can only be of type Callable.)", p_annotation);
+			}
+		} else {
+			if (variable->export_info.type == Variant::Type::CALLABLE) {
+				if (this->is_tool()) {
+					push_error(R"(Export type cannot be of type Callable. Did you mean to use '@export_action'?)", p_annotation);
+				} else {
+					push_error(R"(Export type cannot be of type Callable.)", p_annotation);
+				}
+				return false;
+			}
+		}
+
 	} else {
 		// Validate variable type with export.
 		if (!export_type.is_variant() && (export_type.kind != DataType::BUILTIN || export_type.builtin_type != t_type)) {
