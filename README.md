@@ -1,3 +1,10 @@
+# compile a editor binary
+
+https://docs.godotengine.org/en/latest/development/compiling/compiling_with_mono.html#
+
+
+
+
 # Godot Engine
 
 <p align="center">
