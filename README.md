@@ -3,6 +3,9 @@
 https://docs.godotengine.org/en/latest/development/compiling/compiling_with_mono.html#
 
 
+# merge changes from godot official
+https://github.com/zhouzhipeng/godot/compare/master...godotengine:master
+
 
 
 # Godot Engine
