@@ -5,6 +5,10 @@ https://docs.godotengine.org/en/latest/development/compiling/compiling_with_mono
 ## build 'export templates' script
 https://gist.github.com/need12648430/d591fe3825fc4c3af5d7095e61e285fc
 
+# godot engine develop
+ide: https://docs.godotengine.org/en/stable/development/cpp/configuring_an_ide/visual_studio.html
+(CLion or android studio is not suitable, cant debug directly)
+
 
 # merge changes from godot official
 https://github.com/zhouzhipeng/godot/compare/master...godotengine:master
