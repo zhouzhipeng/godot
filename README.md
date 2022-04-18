@@ -2,6 +2,9 @@
 
 https://docs.godotengine.org/en/latest/development/compiling/compiling_with_mono.html#
 
+## build 'export templates' script
+https://gist.github.com/need12648430/d591fe3825fc4c3af5d7095e61e285fc
+
 
 # merge changes from godot official
 https://github.com/zhouzhipeng/godot/compare/master...godotengine:master
