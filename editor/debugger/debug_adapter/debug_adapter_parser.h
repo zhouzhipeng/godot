@@ -45,7 +45,9 @@ private:
 	friend DebugAdapterProtocol;
 
 	_FORCE_INLINE_ bool is_valid_path(const String &p_path) const {
-		return p_path.begins_with(ProjectSettings::get_singleton()->get_resource_path());
+		//compatible with windows path "\" ,but godot editor using "/"
+		String path_updated = p_path.replace("\\","/");
+		return path_updated.begins_with(ProjectSettings::get_singleton()->get_resource_path());
 	}
 
 protected:
