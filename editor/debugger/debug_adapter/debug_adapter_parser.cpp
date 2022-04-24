@@ -324,6 +324,7 @@ Dictionary DebugAdapterParser::req_stackTrace(const Dictionary &p_params) const 
 }
 
 Dictionary DebugAdapterParser::req_setBreakpoints(const Dictionary &p_params) const {
+
 	Dictionary response = prepare_success_response(p_params), body;
 	response["body"] = body;
 
@@ -339,6 +340,7 @@ Dictionary DebugAdapterParser::req_setBreakpoints(const Dictionary &p_params) co
 		variables["editorPath"] = ProjectSettings::get_singleton()->get_resource_path();
 		return prepare_error_response(p_params, DAP::ErrorType::WRONG_PATH, variables);
 	}
+	
 
 	Array breakpoints = args["breakpoints"], lines;
 	for (int i = 0; i < breakpoints.size(); i++) {

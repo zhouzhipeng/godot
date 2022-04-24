@@ -654,8 +654,16 @@ int DebugAdapterProtocol::parse_variant(const Variant &p_var) {
 }
 
 bool DebugAdapterProtocol::process_message(const String &p_text) {
+	String updated_text = p_text.replace("\\\\","/").replace("\\","/")
+		.replace("c:/","C:/")
+		.replace("d:/","D:/")
+		.replace("e:/","E:/")
+		.replace("f:/","F:/")
+		.replace("g:/","G:/")
+		.replace("h:/","H:/");
+	
 	JSON json;
-	ERR_FAIL_COND_V_MSG(json.parse(p_text) != OK, true, "Mal-formed message!");
+	ERR_FAIL_COND_V_MSG(json.parse(updated_text) != OK, true, "Mal-formed message!");
 	Dictionary params = json.get_data();
 	bool completed = true;
 
