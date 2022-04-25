@@ -169,7 +169,7 @@ class SceneTreeDock : public VBoxContainer {
 	bool first_enter = true;
 
 	void _create();
-	void _do_create(Node *p_parent);
+	void _do_create(Node *p_parent, Node *child=nullptr);
 	Node *scene_root = nullptr;
 	Node *edited_scene = nullptr;
 

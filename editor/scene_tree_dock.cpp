@@ -2129,12 +2129,16 @@ void SceneTreeDock::_selection_changed() {
 	_update_script_button();
 }
 
-void SceneTreeDock::_do_create(Node *p_parent) {
-	Variant c = create_dialog->instance_selected();
+void SceneTreeDock::_do_create(Node *p_parent, Node *child) {
+	Variant c = child;
+	if(child == nullptr){
+		c = create_dialog->instance_selected();
 
-	ERR_FAIL_COND(!c);
-	Node *child = Object::cast_to<Node>(c);
-	ERR_FAIL_COND(!child);
+		ERR_FAIL_COND(!c);
+		child = Object::cast_to<Node>(c);
+		ERR_FAIL_COND(!child);
+	}
+	
 
 	editor_data->get_undo_redo().create_action(TTR("Create Node"));
 
@@ -2200,6 +2204,12 @@ void SceneTreeDock::_create() {
 		}
 
 		_do_create(parent);
+
+		//create  child nodes for convinient.
+		Node* p = scene_tree->get_selected();
+		if (p->is_class("CollisionObject3D")) {
+			_do_create(p, Object::cast_to<Node>(ClassDB::instantiate("CollisionShape3D")));
+		}
 
 	} else if (current_option == TOOL_REPLACE) {
 		List<Node *> selection = editor_selection->get_selected_node_list();
