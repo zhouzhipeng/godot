@@ -2209,6 +2209,8 @@ void SceneTreeDock::_create() {
 		Node* p = scene_tree->get_selected();
 		if (p->is_class("CollisionObject3D")) {
 			_do_create(p, Object::cast_to<Node>(ClassDB::instantiate("CollisionShape3D")));
+		}else if (p->is_class("Timer")) {
+			p->set("autostart", true);
 		}
 
 	} else if (current_option == TOOL_REPLACE) {
