@@ -485,7 +485,7 @@ EditorPropertyPath::EditorPropertyPath() {
 	HBoxContainer *path_hb = memnew(HBoxContainer);
 	add_child(path_hb);
 	path = memnew(LineEdit);
-	path->set_structured_text_bidi_override(Control::STRUCTURED_TEXT_FILE);
+	path->set_structured_text_bidi_override(TextServer::STRUCTURED_TEXT_FILE);
 	path_hb->add_child(path);
 	path->connect("text_submitted", callable_mp(this, &EditorPropertyPath::_path_selected));
 	path->connect("focus_exited", callable_mp(this, &EditorPropertyPath::_path_focus_exited));
@@ -2085,7 +2085,7 @@ EditorPropertyRect2i::EditorPropertyRect2i(bool p_force_wide) {
 	}
 }
 
-///////////////////// VECTOR3i /////////////////////////
+///////////////////// VECTOR3I /////////////////////////
 
 void EditorPropertyVector3i::_set_read_only(bool p_read_only) {
 	for (int i = 0; i < 3; i++) {
@@ -2618,7 +2618,7 @@ EditorPropertyBasis::EditorPropertyBasis() {
 	set_bottom_editor(g);
 }
 
-///////////////////// TRANSFORM /////////////////////////
+///////////////////// TRANSFORM3D /////////////////////////
 
 void EditorPropertyTransform3D::_set_read_only(bool p_read_only) {
 	for (int i = 0; i < 12; i++) {
@@ -2975,10 +2975,16 @@ void EditorPropertyResource::_set_read_only(bool p_read_only) {
 };
 
 void EditorPropertyResource::_resource_selected(const RES &p_resource, bool p_edit) {
-	if (p_resource->is_built_in() && !p_resource->get_path().is_empty() && p_resource->get_path().get_slice("::", 0) != EditorNode::get_singleton()->get_edited_scene()->get_scene_file_path()) {
-		// If the resource belongs to another scene, edit it in that scene instead.
-		EditorNode::get_singleton()->call_deferred("edit_foreign_resource", p_resource);
-		return;
+	if (p_resource->is_built_in() && !p_resource->get_path().is_empty()) {
+		String parent = p_resource->get_path().get_slice("::", 0);
+		List<String> extensions;
+		ResourceLoader::get_recognized_extensions_for_type("PackedScene", &extensions);
+
+		if (extensions.find(parent.get_extension()) && (!EditorNode::get_singleton()->get_edited_scene() || EditorNode::get_singleton()->get_edited_scene()->get_scene_file_path() == parent)) {
+			// If the resource belongs to another scene, edit it in that scene instead.
+			EditorNode::get_singleton()->call_deferred("edit_foreign_resource", p_resource);
+			return;
+		}
 	}
 
 	if (!p_edit && use_sub_inspector) {
@@ -3118,12 +3124,12 @@ void EditorPropertyResource::_update_property_bg() {
 		add_theme_style_override("bg", get_theme_stylebox("sub_inspector_property_bg" + itos(count_subinspectors), SNAME("Editor")));
 
 		add_theme_constant_override("font_offset", get_theme_constant(SNAME("sub_inspector_font_offset"), SNAME("Editor")));
-		add_theme_constant_override("vseparation", 0);
+		add_theme_constant_override("v_separation", 0);
 	} else {
 		add_theme_color_override("property_color", get_theme_color(SNAME("property_color"), SNAME("EditorProperty")));
 		add_theme_style_override("bg_selected", get_theme_stylebox(SNAME("bg_selected"), SNAME("EditorProperty")));
 		add_theme_style_override("bg", get_theme_stylebox(SNAME("bg"), SNAME("EditorProperty")));
-		add_theme_constant_override("vseparation", get_theme_constant(SNAME("vseparation"), SNAME("EditorProperty")));
+		add_theme_constant_override("v_separation", get_theme_constant(SNAME("v_separation"), SNAME("EditorProperty")));
 		add_theme_constant_override("font_offset", get_theme_constant(SNAME("font_offset"), SNAME("EditorProperty")));
 	}
 
