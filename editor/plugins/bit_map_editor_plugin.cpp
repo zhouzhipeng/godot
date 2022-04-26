@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  animation_library.h                                                  */
+/*  bit_map_editor_plugin.cpp                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,38 +28,59 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef ANIMATION_LIBRARY_H
-#define ANIMATION_LIBRARY_H
+#include "bit_map_editor_plugin.h"
 
-#include "core/variant/typed_array.h"
-#include "scene/resources/animation.h"
+#include "editor/editor_scale.h"
 
-class AnimationLibrary : public Resource {
-	GDCLASS(AnimationLibrary, Resource)
+void BitMapEditor::setup(const Ref<BitMap> &p_bitmap) {
+	Ref<ImageTexture> texture;
+	texture.instantiate();
+	texture->create_from_image(p_bitmap->convert_to_image());
+	texture_rect->set_texture(texture);
 
-	void _set_data(const Dictionary &p_data);
-	Dictionary _get_data() const;
+	size_label->set_text(vformat(String::utf8("%s×%s"), p_bitmap->get_size().width, p_bitmap->get_size().height));
+}
 
-	TypedArray<StringName> _get_animation_list() const;
+BitMapEditor::BitMapEditor() {
+	texture_rect = memnew(TextureRect);
+	texture_rect->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
+	texture_rect->set_texture_filter(TEXTURE_FILTER_NEAREST);
+	texture_rect->set_custom_minimum_size(Size2(0, 250) * EDSCALE);
+	add_child(texture_rect);
 
-	friend class AnimationPlayer; //for faster access
-	Map<StringName, Ref<Animation>> animations;
+	size_label = memnew(Label);
+	size_label->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_RIGHT);
+	add_child(size_label);
 
-protected:
-	static void _bind_methods();
+	// Reduce extra padding on top and bottom of size label.
+	Ref<StyleBoxEmpty> stylebox;
+	stylebox.instantiate();
+	stylebox->set_default_margin(SIDE_RIGHT, 4 * EDSCALE);
+	size_label->add_theme_style_override("normal", stylebox);
+}
 
-public:
-	static bool is_valid_name(const String &p_name);
-	static String validate_name(const String &p_name);
+///////////////////////
 
-	Error add_animation(const StringName &p_name, const Ref<Animation> &p_animation);
-	void remove_animation(const StringName &p_name);
-	void rename_animation(const StringName &p_name, const StringName &p_new_name);
-	bool has_animation(const StringName &p_name) const;
-	Ref<Animation> get_animation(const StringName &p_name) const;
-	void get_animation_list(List<StringName> *p_animations) const;
+bool EditorInspectorPluginBitMap::can_handle(Object *p_object) {
+	return Object::cast_to<BitMap>(p_object) != nullptr;
+}
 
-	AnimationLibrary();
-};
+void EditorInspectorPluginBitMap::parse_begin(Object *p_object) {
+	BitMap *bitmap = Object::cast_to<BitMap>(p_object);
+	if (!bitmap) {
+		return;
+	}
+	Ref<BitMap> bm(bitmap);
 
-#endif // ANIMATIONLIBRARY_H
+	BitMapEditor *editor = memnew(BitMapEditor);
+	editor->setup(bm);
+	add_custom_control(editor);
+}
+
+///////////////////////
+
+BitMapEditorPlugin::BitMapEditorPlugin() {
+	Ref<EditorInspectorPluginBitMap> plugin;
+	plugin.instantiate();
+	add_inspector_plugin(plugin);
+}

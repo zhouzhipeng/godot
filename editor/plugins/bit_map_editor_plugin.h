@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  animation_library.h                                                  */
+/*  bit_map_editor_plugin.h                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,38 +28,37 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef ANIMATION_LIBRARY_H
-#define ANIMATION_LIBRARY_H
+#ifndef BIT_MAP_PREVIEW_EDITOR_PLUGIN_H
+#define BIT_MAP_PREVIEW_EDITOR_PLUGIN_H
 
-#include "core/variant/typed_array.h"
-#include "scene/resources/animation.h"
+#include "editor/editor_plugin.h"
+#include "scene/resources/bit_map.h"
 
-class AnimationLibrary : public Resource {
-	GDCLASS(AnimationLibrary, Resource)
+class BitMapEditor : public VBoxContainer {
+	GDCLASS(BitMapEditor, VBoxContainer);
 
-	void _set_data(const Dictionary &p_data);
-	Dictionary _get_data() const;
-
-	TypedArray<StringName> _get_animation_list() const;
-
-	friend class AnimationPlayer; //for faster access
-	Map<StringName, Ref<Animation>> animations;
-
-protected:
-	static void _bind_methods();
+	TextureRect *texture_rect = nullptr;
+	Label *size_label = nullptr;
 
 public:
-	static bool is_valid_name(const String &p_name);
-	static String validate_name(const String &p_name);
+	void setup(const Ref<BitMap> &p_bitmap);
 
-	Error add_animation(const StringName &p_name, const Ref<Animation> &p_animation);
-	void remove_animation(const StringName &p_name);
-	void rename_animation(const StringName &p_name, const StringName &p_new_name);
-	bool has_animation(const StringName &p_name) const;
-	Ref<Animation> get_animation(const StringName &p_name) const;
-	void get_animation_list(List<StringName> *p_animations) const;
-
-	AnimationLibrary();
+	BitMapEditor();
 };
 
-#endif // ANIMATIONLIBRARY_H
+class EditorInspectorPluginBitMap : public EditorInspectorPlugin {
+	GDCLASS(EditorInspectorPluginBitMap, EditorInspectorPlugin);
+
+public:
+	virtual bool can_handle(Object *p_object) override;
+	virtual void parse_begin(Object *p_object) override;
+};
+
+class BitMapEditorPlugin : public EditorPlugin {
+	GDCLASS(BitMapEditorPlugin, EditorPlugin);
+
+public:
+	BitMapEditorPlugin();
+};
+
+#endif // BIT_MAP_PREVIEW_EDITOR_PLUGIN_H
