@@ -981,12 +981,12 @@ bool SceneTree::has_group(const StringName &p_identifier) const {
 Node *SceneTree::get_first_node_in_group(const StringName &p_group) {
 	Map<StringName, Group>::Element *E = group_map.find(p_group);
 	if (!E) {
-		return nullptr; //no group
+		return nullptr; // No group.
 	}
 
-	_update_group_order(E->get()); //update order just in case
+	_update_group_order(E->get()); // Update order just in case.
 
-	if (E->get().nodes.size() == 0) {
+	if (E->get().nodes.is_empty()) {
 		return nullptr;
 	}
 
@@ -1117,9 +1117,7 @@ Ref<SceneTreeTimer> SceneTree::create_timer(double p_delay_sec, bool p_process_a
 }
 
 Ref<Tween> SceneTree::create_tween() {
-	Ref<Tween> tween;
-	tween.instantiate();
-	tween->set_valid(true);
+	Ref<Tween> tween = memnew(Tween(true));
 	tweens.push_back(tween);
 	return tween;
 }
