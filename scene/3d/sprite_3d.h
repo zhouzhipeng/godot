@@ -71,6 +71,7 @@ private:
 	bool vflip = false;
 
 	Color modulate = Color(1, 1, 1, 1);
+	int render_priority = 0;
 
 	Vector3::Axis axis = Vector3::AXIS_Z;
 	real_t pixel_size = 0.01;
@@ -100,10 +101,10 @@ protected:
 	uint32_t mesh_surface_offsets[RS::ARRAY_MAX];
 	PackedByteArray vertex_buffer;
 	PackedByteArray attribute_buffer;
-	uint32_t vertex_stride;
-	uint32_t attrib_stride;
-	uint32_t skin_stride;
-	uint32_t mesh_surface_format;
+	uint32_t vertex_stride = 0;
+	uint32_t attrib_stride = 0;
+	uint32_t skin_stride = 0;
+	uint32_t mesh_surface_format = 0;
 
 	void _queue_update();
 
@@ -119,6 +120,9 @@ public:
 
 	void set_flip_v(bool p_flip);
 	bool is_flipped_v() const;
+
+	void set_render_priority(int p_priority);
+	int get_render_priority() const;
 
 	void set_modulate(const Color &p_color);
 	Color get_modulate() const;
