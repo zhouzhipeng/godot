@@ -45,7 +45,30 @@ GlobalSignal *GlobalSignal::get_singleton() {
 
 
 void GlobalSignal::dump(){
+
+
+
 	print_line(vformat("GlobalSignal::dump >> _emitters: %s , _listeners: %s",Variant(this->_emitters).to_json_string(),  Variant(this->_listeners).to_json_string() ));
+
+	Array keys = this->_emitters.keys();
+	for(int i=0; i<keys.size(); i++){
+		StringName n = keys[i];
+		Array emitters = this->_emitters[n];
+		for(int j=0; j<emitters.size(); j++){
+			Object* e = emitters[j];
+			List<Connection> conns;
+			e-> get_signal_connection_list(n, &conns);
+
+			Array arr;
+			for (Connection c : conns){
+				arr.push_back(c);	
+			}
+
+			print_line(vformat("GlobalSignal::dump signal connections >>  signal : %s , connections : %s", n, arr));
+
+		}
+	}
+
 
 }
 

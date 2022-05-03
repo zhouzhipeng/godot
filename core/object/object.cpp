@@ -66,6 +66,7 @@ PropertyInfo::operator Dictionary() const {
 	d["name"] = name;
 	d["class_name"] = class_name;
 	d["type"] = type;
+	d["type_name"] = Variant::get_type_name(type) ;
 	d["hint"] = hint;
 	d["hint_string"] = hint_string;
 	d["usage"] = usage;

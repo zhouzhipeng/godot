@@ -682,9 +682,9 @@ void AnimationNodeStateMachine::get_node_list(List<StringName> *r_nodes) const {
 	}
 }
 
-Array AnimationNodeStateMachine::get_states_names() const
+Vector<StringName>  AnimationNodeStateMachine::get_states_names() const
 {
-	Array names;
+	Vector<StringName>  names;
 
 	for (const KeyValue<StringName, State> &E : states) {
 		names.push_back(E.key);

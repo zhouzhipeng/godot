@@ -1514,8 +1514,10 @@ void GDScriptInstance::get_method_list(List<MethodInfo> *p_list) const {
 			mi.name = E.key;
 			mi.flags |= METHOD_FLAG_FROM_SCRIPT;
 			for (int i = 0; i < E.value->get_argument_count(); i++) {
-				mi.arguments.push_back(PropertyInfo(Variant::NIL, "arg" + itos(i)));
+				mi.arguments.push_back(PropertyInfo(E.value->get_argument_type(i).builtin_type,E.value->get_argument_name(i)));
 			}
+
+			mi.return_val = PropertyInfo(E.value->get_return_type().builtin_type,"");
 			p_list->push_back(mi);
 		}
 		sptr = sptr->_base;

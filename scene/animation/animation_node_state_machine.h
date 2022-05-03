@@ -185,7 +185,7 @@ public:
 	StringName get_node_name(const Ref<AnimationNode> &p_node) const;
 	void get_node_list(List<StringName> *r_nodes) const;
 
-	Array get_states_names() const;
+	Vector<StringName>  get_states_names() const;
 
 	void set_node_position(const StringName &p_name, const Vector2 &p_position);
 	Vector2 get_node_position(const StringName &p_name) const;
