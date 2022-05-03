@@ -72,7 +72,24 @@ Error GlobalCall::set_call(const StringName &call_name, const Callable &callable
 		}
 	}
 
-	print_line(vformat("GlobalCall::set_call call_name: %s , callable: %s, method : %s", call_name, callable, m));
+	Dictionary m2;
+	
+	Array args = m["args"];
+	Array args2;
+	for(int i=0;i<args.size();i++){
+		Dictionary a;
+		Dictionary p =  args[i];
+		a["name"] = p["name"];
+		a["type"] = p["type_name"];
+		args2.push_back(a);
+	}
+	m2["args"] = args2;
+
+	Dictionary r =  m["return"];
+	m2["return_type"] = r["type_name"];
+
+
+	print_line(vformat("GlobalCall::set_call call_name: %s , callable: %s, method_signature : %s", call_name, callable, m2));
 
 	_callables[call_name] = callable;
 
