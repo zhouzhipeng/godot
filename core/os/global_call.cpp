@@ -113,6 +113,7 @@ Callable GlobalCall::get_call(const StringName &call_name)
 {
 
 	ERR_FAIL_COND_V_MSG(!this->has_call(call_name), Callable(), vformat("GlobalCall::get_call failed, cause call_name : %s  is not existed. ", call_name));
+	print_line(vformat("GlobalCall::get_call call_name: %s", call_name));
 
 	return _callables[call_name];	
 }

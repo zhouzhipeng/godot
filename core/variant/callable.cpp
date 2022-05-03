@@ -61,6 +61,14 @@ void Callable::call(const Variant **p_arguments, int p_argcount, Variant &r_retu
 #endif
 		r_return_value = obj->callp(method, p_arguments, p_argcount, r_call_error);
 	}
+
+	if(r_call_error.error !=CallError::CALL_OK ){
+		String err_msg = Variant::get_callable_error_text(*this, p_arguments, p_argcount, r_call_error);
+		String msg =  vformat("Callable::call error ! CallError : %s", err_msg);
+		print_line(msg);
+		ERR_PRINT(msg);
+		
+	}
 }
 
 void Callable::rpc(int p_id, const Variant **p_arguments, int p_argcount, CallError &r_call_error) const {
