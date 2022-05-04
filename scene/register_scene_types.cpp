@@ -753,6 +753,7 @@ void register_scene_types() {
 
 	GDREGISTER_VIRTUAL_CLASS(Mesh);
 	GDREGISTER_CLASS(ArrayMesh);
+	GDREGISTER_CLASS(PlaceholderMesh);
 	GDREGISTER_CLASS(ImmediateMesh);
 	GDREGISTER_CLASS(MultiMesh);
 	GDREGISTER_CLASS(SurfaceTool);
@@ -774,6 +775,7 @@ void register_scene_types() {
 	GDREGISTER_ABSTRACT_CLASS(BaseMaterial3D);
 	GDREGISTER_CLASS(StandardMaterial3D);
 	GDREGISTER_CLASS(ORMMaterial3D);
+	GDREGISTER_CLASS(PlaceholderMaterial);
 	SceneTree::add_idle_callback(BaseMaterial3D::flush_changes);
 	BaseMaterial3D::init_shaders();
 
@@ -838,6 +840,12 @@ void register_scene_types() {
 	GDREGISTER_CLASS(CompressedCubemap);
 	GDREGISTER_CLASS(CompressedCubemapArray);
 	GDREGISTER_CLASS(CompressedTexture2DArray);
+	GDREGISTER_CLASS(PlaceholderTexture2D);
+	GDREGISTER_CLASS(PlaceholderTexture3D);
+	GDREGISTER_ABSTRACT_CLASS(PlaceholderTextureLayered);
+	GDREGISTER_CLASS(PlaceholderTexture2DArray);
+	GDREGISTER_CLASS(PlaceholderCubemap);
+	GDREGISTER_CLASS(PlaceholderCubemapArray);
 
 	GDREGISTER_CLASS(Animation);
 	GDREGISTER_CLASS(AnimationLibrary);
