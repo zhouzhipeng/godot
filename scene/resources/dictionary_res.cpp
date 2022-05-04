@@ -43,14 +43,35 @@ Dictionary DictionaryRes::get_data() const
 	return data;
 }
 
+void DictionaryRes::connect_value_changed(const Callable& callable)
+{
+	connect(SNAME("value_changed"), callable);
+}
+
+Error DictionaryRes::set_and_notify(const StringName &key, Variant val)
+{
+	ERR_FAIL_COND_V_MSG(!this->data.has(key), Error::ERR_INVALID_PARAMETER, vformat("DictionaryRes::set_and_notify error , key : '%s' is not existed.", key));
+
+	Variant old_value = this->data[key];
+	this->data[key]=val;
+	emit_signal(SNAME("value_changed"), key, old_value, val);
+}
+
+
 void DictionaryRes::_bind_methods() {
 //	ClassDB::bind_method(D_METHOD("has_setting", "name"), &DictionaryRes::has_setting);
+
+	ClassDB::bind_method(D_METHOD("set_and_notify", "key", "val"), &DictionaryRes::set_and_notify);
+	ClassDB::bind_method(D_METHOD("connect_value_changed", "callable"), &DictionaryRes::connect_value_changed);
+
 	
 	ClassDB::bind_method(D_METHOD("set_data", "data"), &DictionaryRes::set_data);
 	ClassDB::bind_method(D_METHOD("get_data"), &DictionaryRes::get_data);
 
 	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "data", PROPERTY_HINT_NONE,"save your key&value here."), "set_data", "get_data");
 	//ADD_PROPERTY(PropertyInfo(Variant::NIL, "value", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NIL_IS_VARIANT | PROPERTY_USAGE_DEFAULT), "set_constant_value", "get_constant_value");
+
+	ADD_SIGNAL(MethodInfo("value_changed", PropertyInfo(Variant::STRING_NAME, "key"), PropertyInfo(Variant::NIL, "old_value"), PropertyInfo(Variant::NIL, "new_value")));
 
 }
 

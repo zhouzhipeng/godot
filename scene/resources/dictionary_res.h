@@ -50,6 +50,10 @@ public:
 	void set_data(Dictionary data);
 	Dictionary get_data() const;
 
+	void connect_value_changed(const Callable& callable);
+
+	Error set_and_notify(const StringName& key, Variant val);
+
 
 	DictionaryRes();
 	~DictionaryRes();
