@@ -1094,6 +1094,11 @@ void EditorPropertyDictionary::update_property() {
 			hbox->add_child(edit);
 			edit->connect("pressed", callable_mp(this, &EditorPropertyDictionary::_change_type), varray(edit, change_index));
 
+			//set default type to String , no need to click 'edit type' button every time.
+			//this->_change_type(edit, Variant::Type::STRING);
+			this->object->set_new_item_key("");
+			this->object->set_new_item_value("");
+
 			prop->update_property();
 
 			if (i == amount + 1) {
