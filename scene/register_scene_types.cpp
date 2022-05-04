@@ -207,6 +207,7 @@
 #include "scene/resources/world_3d.h"
 #include "scene/resources/world_boundary_shape_2d.h"
 #include "scene/resources/world_boundary_shape_3d.h"
+#include "scene/resources/dictionary_res.h"
 #include "scene/scene_string_names.h"
 
 #include "scene/main/shader_globals_override.h"
@@ -898,6 +899,9 @@ void register_scene_types() {
 
 	GDREGISTER_CLASS(SceneTree);
 	GDREGISTER_ABSTRACT_CLASS(SceneTreeTimer); // sorry, you can't create it
+
+	/* custom resource types*/
+	GDREGISTER_CLASS(DictionaryRes);
 
 #ifndef DISABLE_DEPRECATED
 	// Dropped in 4.0, near approximation.
