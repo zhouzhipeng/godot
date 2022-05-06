@@ -54,7 +54,7 @@ Error DictionaryRes::set_and_notify(const StringName &key, Variant val)
 
 	Variant old_value = this->data[key];
 	this->data[key]=val;
-	emit_signal(SNAME("value_changed"), key, old_value, val);
+	return emit_signal(SNAME("value_changed"), key, old_value, val);
 }
 
 
@@ -76,7 +76,7 @@ void DictionaryRes::_bind_methods() {
 }
 
 DictionaryRes::DictionaryRes() {
-	data["your key here"] = "your value(any valid Variant values)";
+	//data["your key here"] = "your value(any valid Variant values)";
 }
 
 DictionaryRes::~DictionaryRes() {
