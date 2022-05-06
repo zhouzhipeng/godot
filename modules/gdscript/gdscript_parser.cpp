@@ -3569,7 +3569,11 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 			} break;
 			default:
 				// TODO: Allow custom user resources.
-				push_error(R"(Export type can only be built-in, a resource, or an enum.)", variable);
+				variable->export_info.type = Variant::OBJECT;
+				variable->export_info.hint = PROPERTY_HINT_RESOURCE_TYPE;
+				variable->export_info.hint_string = export_type.native_type;
+				//print_line(vformat("debug log :: export_type.class_type->identifier->name = %s", export_type.class_type->identifier->name ));
+				//push_error(R"(Export type can only be built-in, a resource, or an enum.)", variable);
 				break;
 		}
 
