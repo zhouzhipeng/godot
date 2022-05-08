@@ -208,6 +208,10 @@ Error GDScriptAnalyzer::check_class_member_name_conflict(const GDScriptParser::C
 }
 
 Error GDScriptAnalyzer::resolve_inheritance(GDScriptParser::ClassNode *p_class, bool p_recursive) {
+	if(p_class==nullptr){
+		ERR_PRINT(vformat("GDScriptAnalyzer::resolve_inheritance error : p_class is nullptr "));
+		return Error::ERR_INVALID_PARAMETER;
+	}
 	if (p_class->base_type.is_set()) {
 		// Already resolved
 		return OK;

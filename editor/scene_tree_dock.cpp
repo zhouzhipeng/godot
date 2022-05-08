@@ -928,7 +928,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 
 					//copy a get_node statement
 					String node_name(node->get_name());
-					String s = "@onready var "+(node_name.to_lower().substr(0,1))+node_name.substr(1) +" := get_node('"+path+"') as "+node->get_class();
+					String s = "@onready var "+(node_name.camelcase_to_underscore().to_lower()) +" := $"+path+"  as "+node->get_class();
 					DisplayServer::get_singleton()->clipboard_set(s);
 				}
 			}

@@ -3653,14 +3653,17 @@ bool GDScriptParser::network_annotations(const AnnotationNode *p_annotation, Nod
 				push_error(R"(Invalid RPC argument. Must be one of: 'call_local'/'call_remote' (local calls), 'any_peer'/'authority' (permission), 'reliable'/'unreliable'/'unreliable_ordered' (transfer mode).)", p_annotation);
 			}
 		}
+	}else{
+		//if no arg in @rpc ,use default.
+		rpc_config.rpc_mode = Multiplayer::RPC_MODE_ANY_PEER;
 	}
 	switch (p_node->type) {
 		case Node::FUNCTION: {
 			FunctionNode *function = static_cast<FunctionNode *>(p_node);
-			if (function->rpc_config.rpc_mode != Multiplayer::RPC_MODE_DISABLED) {
+			/*if (function->rpc_config.rpc_mode != Multiplayer::RPC_MODE_DISABLED) {
 				push_error(R"(RPC annotations can only be used once per function.)", p_annotation);
 				return false;
-			}
+			}*/
 			function->rpc_config = rpc_config;
 			break;
 		}

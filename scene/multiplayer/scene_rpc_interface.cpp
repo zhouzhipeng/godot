@@ -286,24 +286,24 @@ void SceneRPCInterface::_process_rpc(Node *p_node, const uint16_t p_rpc_method_i
 	}
 }
 
-void SceneRPCInterface::_send_rpc(Node *p_from, int p_to, uint16_t p_rpc_id, const Multiplayer::RPCConfig &p_config, const StringName &p_name, const Variant **p_arg, int p_argcount) {
+Error SceneRPCInterface::_send_rpc(Node *p_from, int p_to, uint16_t p_rpc_id, const Multiplayer::RPCConfig &p_config, const StringName &p_name, const Variant **p_arg, int p_argcount) {
 	Ref<MultiplayerPeer> peer = multiplayer->get_multiplayer_peer();
-	ERR_FAIL_COND_MSG(peer.is_null(), "Attempt to call RPC without active multiplayer peer.");
+	ERR_FAIL_COND_V_MSG(peer.is_null(), Error::ERR_INVALID_DATA, "Attempt to call RPC without active multiplayer peer.");
 
-	ERR_FAIL_COND_MSG(peer->get_connection_status() == MultiplayerPeer::CONNECTION_CONNECTING, "Attempt to call RPC while multiplayer peer is not connected yet.");
+	ERR_FAIL_COND_V_MSG(peer->get_connection_status() == MultiplayerPeer::CONNECTION_CONNECTING,Error::ERR_INVALID_DATA, "Attempt to call RPC while multiplayer peer is not connected yet.");
 
-	ERR_FAIL_COND_MSG(peer->get_connection_status() == MultiplayerPeer::CONNECTION_DISCONNECTED, "Attempt to call RPC while multiplayer peer is disconnected.");
+	ERR_FAIL_COND_V_MSG(peer->get_connection_status() == MultiplayerPeer::CONNECTION_DISCONNECTED, Error::ERR_INVALID_DATA, "Attempt to call RPC while multiplayer peer is disconnected.");
 
-	ERR_FAIL_COND_MSG(p_argcount > 255, "Too many arguments (>255).");
+	ERR_FAIL_COND_V_MSG(p_argcount > 255, Error::ERR_INVALID_PARAMETER, "Too many arguments (>255).");
 
 	if (p_to != 0 && !multiplayer->get_connected_peers().has(ABS(p_to))) {
-		ERR_FAIL_COND_MSG(p_to == peer->get_unique_id(), "Attempt to call RPC on yourself! Peer unique ID: " + itos(peer->get_unique_id()) + ".");
+		ERR_FAIL_COND_V_MSG(p_to == peer->get_unique_id(),Error::ERR_INVALID_PARAMETER, "Attempt to call RPC on yourself! Peer unique ID: " + itos(peer->get_unique_id()) + ".");
 
-		ERR_FAIL_MSG("Attempt to call RPC with unknown peer ID: " + itos(p_to) + ".");
+		ERR_FAIL_COND_V_MSG(true, Error::ERR_INVALID_PARAMETER,"Attempt to call RPC with unknown peer ID: " + itos(p_to) + ".");
 	}
 
 	NodePath from_path = multiplayer->get_root_path().rel_path_to(p_from->get_path());
-	ERR_FAIL_COND_MSG(from_path.is_empty(), "Unable to send RPC. Relative path is empty. THIS IS LIKELY A BUG IN THE ENGINE!");
+	ERR_FAIL_COND_V_MSG(from_path.is_empty(), Error::ERR_INVALID_PARAMETER, "Unable to send RPC. Relative path is empty. THIS IS LIKELY A BUG IN THE ENGINE!");
 
 	// See if all peers have cached path (if so, call can be fast).
 	int psc_id;
@@ -375,7 +375,7 @@ void SceneRPCInterface::_send_rpc(Node *p_from, int p_to, uint16_t p_rpc_id, con
 
 	int len;
 	Error err = MultiplayerAPI::encode_and_compress_variants(p_arg, p_argcount, nullptr, len, &byte_only_or_no_args, multiplayer->is_object_decoding_allowed());
-	ERR_FAIL_COND_MSG(err != OK, "Unable to encode RPC arguments. THIS IS LIKELY A BUG IN THE ENGINE!");
+	ERR_FAIL_COND_V_MSG(err != OK, Error::ERR_INVALID_PARAMETER, "Unable to encode RPC arguments. THIS IS LIKELY A BUG IN THE ENGINE!");
 	if (byte_only_or_no_args) {
 		MAKE_ROOM(ofs + len);
 	} else {
@@ -388,9 +388,9 @@ void SceneRPCInterface::_send_rpc(Node *p_from, int p_to, uint16_t p_rpc_id, con
 		ofs += len;
 	}
 
-	ERR_FAIL_COND(command_type > 7);
-	ERR_FAIL_COND(node_id_compression > 3);
-	ERR_FAIL_COND(name_id_compression > 1);
+	ERR_FAIL_COND_V(command_type > 7, Error::ERR_INVALID_DATA);
+	ERR_FAIL_COND_V(node_id_compression > 3, Error::ERR_INVALID_DATA);
+	ERR_FAIL_COND_V(name_id_compression > 1, Error::ERR_INVALID_DATA);
 
 	// We can now set the meta
 	packet_cache.write[0] = command_type + (node_id_compression << NODE_ID_COMPRESSION_SHIFT) + (name_id_compression << NAME_ID_COMPRESSION_SHIFT) + (byte_only_or_no_args ? BYTE_ONLY_OR_NO_ARGS_FLAG : 0);
@@ -443,6 +443,8 @@ void SceneRPCInterface::_send_rpc(Node *p_from, int p_to, uint16_t p_rpc_id, con
 			}
 		}
 	}
+
+	return OK;
 }
 
 void SceneRPCInterface::rpcp(Object *p_obj, int p_peer_id, const StringName &p_method, const Variant **p_arg, int p_argcount) {
@@ -468,15 +470,17 @@ void SceneRPCInterface::rpcp(Object *p_obj, int p_peer_id, const StringName &p_m
 		}
 	}
 
+	Error rpc_error= OK;
 	if (p_peer_id != node_id) {
 #ifdef DEBUG_ENABLED
 		_profile_node_data("rpc_out", node->get_instance_id());
 #endif
 
-		_send_rpc(node, p_peer_id, rpc_id, config, p_method, p_arg, p_argcount);
+		rpc_error = _send_rpc(node, p_peer_id, rpc_id, config, p_method, p_arg, p_argcount);
+
 	}
 
-	if (call_local_native) {
+	if (call_local_native && rpc_error==OK) {
 		Callable::CallError ce;
 
 		multiplayer->set_remote_sender_override(peer->get_unique_id());
@@ -491,7 +495,7 @@ void SceneRPCInterface::rpcp(Object *p_obj, int p_peer_id, const StringName &p_m
 		}
 	}
 
-	if (call_local_script) {
+	if (call_local_script && rpc_error==OK) {
 		Callable::CallError ce;
 		ce.error = Callable::CallError::CALL_OK;
 

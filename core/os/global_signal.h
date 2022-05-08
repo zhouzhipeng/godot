@@ -52,6 +52,7 @@ class GlobalSignal : public Object {
 private:
 	Dictionary _emitters;
 	Dictionary _listeners;
+	bool debug_log=true;
 public:
 	static GlobalSignal *get_singleton();
 
@@ -61,13 +62,15 @@ public:
 
 	void _connect_listener_to_emitters(const StringName &signal_name,const Callable &method_call);
 
-	void add_emitter(const StringName &signal_name, Object* emitter);
+	Error add_emitter(const StringName &signal_name, Object* emitter);
 
 	void add_listener(const StringName &signal_name,const Callable &method_call);
 
 	void remove_emitter(const StringName &signal_name, Object* emitter);
 
 	void remove_listener(const StringName &signal_name,const Callable &method_call);
+
+	void set_debug(bool debug);
 
 
 	GlobalSignal();

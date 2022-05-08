@@ -46,7 +46,9 @@ GlobalSignal *GlobalSignal::get_singleton() {
 
 void GlobalSignal::dump(){
 
-
+	if(!debug_log){
+		return;
+	}
 
 	print_line(vformat("GlobalSignal::dump >> _emitters: %s , _listeners: %s",Variant(this->_emitters).to_json_string(),  Variant(this->_listeners).to_json_string() ));
 
@@ -91,8 +93,10 @@ void GlobalSignal::_connect_listener_to_emitters(const StringName &signal_name, 
 	}
 }
 
-void GlobalSignal::add_emitter(const StringName &signal_name, Object* emitter)
+Error GlobalSignal::add_emitter(const StringName &signal_name, Object* emitter)
 {
+	ERR_FAIL_COND_V_MSG(!emitter->has_signal(signal_name), Error::ERR_INVALID_PARAMETER, vformat("GlobalSignal::add_emitter error , signal_name %s not found on emitter %s", signal_name, emitter));
+
 	print_line(vformat("GlobalSignal::add_emitter signal_name: %s , emitter: %s", signal_name, emitter->to_string()));
 
 	if(!this->_emitters.has(signal_name)){
@@ -107,6 +111,8 @@ void GlobalSignal::add_emitter(const StringName &signal_name, Object* emitter)
 	}
 
 	this->dump();
+
+	return OK;
 }
 
 void GlobalSignal::add_listener(const StringName &signal_name, const Callable &method_call)
@@ -208,12 +214,19 @@ void GlobalSignal::remove_listener(const StringName &signal_name, const Callable
 
 }
 
+void GlobalSignal::set_debug(bool debug)
+{
+	debug_log = debug;
+}
+
 
 void GlobalSignal::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("add_listener", "signal_name", "method_call"), &GlobalSignal::add_listener);
 	ClassDB::bind_method(D_METHOD("add_emitter", "signal_name", "emitter"), &GlobalSignal::add_emitter);
 	ClassDB::bind_method(D_METHOD("remove_emitter", "signal_name", "emitter"), &GlobalSignal::remove_emitter);
 	ClassDB::bind_method(D_METHOD("remove_listener", "signal_name", "method_call"), &GlobalSignal::remove_listener);
+	ClassDB::bind_method(D_METHOD("set_debug", "debug"), &GlobalSignal::set_debug);
+
 }
 
 GlobalSignal::GlobalSignal() {
