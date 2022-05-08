@@ -44,13 +44,13 @@
 // Leap seconds are not handled, they must be done manually if desired.
 // Suffixes such as "Z" are not handled, you need to strip them away manually.
 
-class GlobalSignal : public Object {
+class GlobalSignal: public Object {
 	GDCLASS(GlobalSignal, Object);
+
 	static void _bind_methods();
 	static GlobalSignal *singleton;
 
 private:
-	Dictionary _emitters;
 	Dictionary _listeners;
 	bool debug_log=true;
 public:
@@ -58,17 +58,11 @@ public:
 
 	void dump();
 
-	void _connect_emitter_to_listeners(const StringName &signal_name, Object* emitter);
-
-	void _connect_listener_to_emitters(const StringName &signal_name,const Callable &method_call);
-
-	Error add_emitter(const StringName &signal_name, Object* emitter);
-
 	void add_listener(const StringName &signal_name,const Callable &method_call);
 
-	void remove_emitter(const StringName &signal_name, Object* emitter);
-
 	void remove_listener(const StringName &signal_name,const Callable &method_call);
+
+	Error do_call(const Variant** p_args, int p_argcount, Callable::CallError& r_error);
 
 	void set_debug(bool debug);
 

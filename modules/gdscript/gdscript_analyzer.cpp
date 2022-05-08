@@ -1390,6 +1390,11 @@ void GDScriptAnalyzer::resolve_for(GDScriptParser::ForNode *p_for) {
 		variable_type.type_source = GDScriptParser::DataType::ANNOTATED_INFERRED;
 		variable_type.kind = GDScriptParser::DataType::BUILTIN;
 		variable_type.builtin_type = Variant::INT; // Can this ever be a float or something else?
+
+		if(p_for->variable==nullptr){
+			push_error(vformat(R"*(p_for->variable is nullptr.)*"), p_for);
+			return;
+		}
 		p_for->variable->set_datatype(variable_type);
 	} else if (p_for->list) {
 		resolve_node(p_for->list);

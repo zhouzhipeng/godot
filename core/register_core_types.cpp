@@ -79,7 +79,7 @@
 #include "core/string/optimized_translation.h"
 #include "core/string/translation.h"
 #include "core/os/global_signal.h"
-#include "core/os/global_call.h"
+
 
 static Ref<ResourceFormatSaverBinary> resource_saver_binary;
 static Ref<ResourceFormatLoaderBinary> resource_loader_binary;
@@ -304,7 +304,6 @@ void register_core_singletons() {
 	GDREGISTER_CLASS(core_bind::EngineDebugger);
 	GDREGISTER_CLASS(Time);
 	GDREGISTER_CLASS(GlobalSignal);
-	GDREGISTER_CLASS(GlobalCall);
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ProjectSettings", ProjectSettings::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("IP", IP::get_singleton(), "IP"));
@@ -326,7 +325,6 @@ void register_core_singletons() {
 
 	//custom singletons.
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GlobalSignal", GlobalSignal::get_singleton()));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("GlobalCall", GlobalCall::get_singleton()));
 
 }
 
