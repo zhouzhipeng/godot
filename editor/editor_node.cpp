@@ -153,7 +153,6 @@
 #include "editor/plugins/gradient_editor_plugin.h"
 #include "editor/plugins/gradient_texture_2d_editor_plugin.h"
 #include "editor/plugins/input_event_editor_plugin.h"
-#include "editor/plugins/inspector_action_editor_plugin.h"
 #include "editor/plugins/light_occluder_2d_editor_plugin.h"
 #include "editor/plugins/lightmap_gi_editor_plugin.h"
 #include "editor/plugins/line_2d_editor_plugin.h"
@@ -7100,7 +7099,6 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(GradientTexture2DEditorPlugin));
 	add_editor_plugin(memnew(BitMapEditorPlugin));
 	add_editor_plugin(memnew(RayCast2DEditorPlugin));
-	add_editor_plugin(memnew(InspectorActionPlugin));
 
 	for (int i = 0; i < EditorPlugins::get_plugin_count(); i++) {
 		add_editor_plugin(EditorPlugins::create(i));
