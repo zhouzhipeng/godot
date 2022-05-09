@@ -1893,7 +1893,7 @@ void VulkanContext::flush(bool p_flush_setup, bool p_flush_pending) {
 		submit_info.pSignalSemaphores = nullptr;
 		VkResult err = vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
 		command_buffer_queue.write[0] = nullptr;
-		ERR_FAIL_COND_MSG(err, "Failed to submit vulkan queue.");
+		ERR_FAIL_COND(err);
 		vkDeviceWaitIdle(device);
 	}
 
@@ -1911,7 +1911,7 @@ void VulkanContext::flush(bool p_flush_setup, bool p_flush_pending) {
 		submit_info.signalSemaphoreCount = 0;
 		submit_info.pSignalSemaphores = nullptr;
 		VkResult err = vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
-		ERR_FAIL_COND_MSG(err, "Failed to submit vulkan queue.");
+		ERR_FAIL_COND(err);
 		vkDeviceWaitIdle(device);
 
 		command_buffer_count = 1;
@@ -2279,11 +2279,16 @@ void VulkanContext::local_device_push_command_buffers(RID p_local_device, const 
 	submit_info.pSignalSemaphores = nullptr;
 
 	VkResult err = vkQueueSubmit(ld->queue, 1, &submit_info, VK_NULL_HANDLE);
-
-	ERR_FAIL_COND_MSG(err == VK_ERROR_OUT_OF_HOST_MEMORY, "Vulkan: Out of host memory!");
-	ERR_FAIL_COND_MSG(err == VK_ERROR_OUT_OF_DEVICE_MEMORY, "Vulkan: Out of device memory!");
-	ERR_FAIL_COND_MSG(err == VK_ERROR_DEVICE_LOST, "Vulkan: Device lost!");
-	ERR_FAIL_COND_MSG(err, "Failed to submit vulkan queue.");
+	if (err == VK_ERROR_OUT_OF_HOST_MEMORY) {
+		print_line("Vulkan: Out of host memory!");
+	}
+	if (err == VK_ERROR_OUT_OF_DEVICE_MEMORY) {
+		print_line("Vulkan: Out of device memory!");
+	}
+	if (err == VK_ERROR_DEVICE_LOST) {
+		print_line("Vulkan: Device lost!");
+	}
+	ERR_FAIL_COND(err);
 
 	ld->waiting = true;
 }

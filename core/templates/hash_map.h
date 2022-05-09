@@ -106,7 +106,7 @@ private:
 	uint32_t elements = 0;
 
 	void make_hash_table() {
-		ERR_FAIL_COND_MSG(hash_table, "Hash table is already configured.");
+		ERR_FAIL_COND(hash_table);
 
 		hash_table = memnew_arr(Element *, (1 << MIN_HASH_TABLE_POWER));
 

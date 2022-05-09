@@ -175,7 +175,7 @@ public:
 		GLOBAL_LOCK_FUNCTION;
 		T::initialize_class();
 		ClassInfo *t = classes.getptr(T::get_class_static());
-		ERR_FAIL_COND_MSG(!t, "Class \"" + T::get_class_static() + "\" is not registered properly.");
+		ERR_FAIL_COND(!t);
 		t->creation_func = &creator<T>;
 		t->exposed = true;
 		t->is_virtual = p_virtual;
@@ -189,7 +189,7 @@ public:
 		GLOBAL_LOCK_FUNCTION;
 		T::initialize_class();
 		ClassInfo *t = classes.getptr(T::get_class_static());
-		ERR_FAIL_COND_MSG(!t, "Virtual class \"" + T::get_class_static() + "\" is not registered properly.");
+		ERR_FAIL_COND(!t);
 		t->exposed = true;
 		t->class_ptr = T::get_class_ptr_static();
 		t->api = current_api;
@@ -209,7 +209,7 @@ public:
 		GLOBAL_LOCK_FUNCTION;
 		T::initialize_class();
 		ClassInfo *t = classes.getptr(T::get_class_static());
-		ERR_FAIL_COND_MSG(!t, "Custom class \"" + T::get_class_static() + "\" is not registered properly.");
+		ERR_FAIL_COND(!t);
 		t->creation_func = &_create_ptr_func<T>;
 		t->exposed = true;
 		t->class_ptr = T::get_class_ptr_static();

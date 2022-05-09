@@ -908,10 +908,11 @@ void Node::_set_name_nocheck(const StringName &p_name) {
 void Node::set_name(const String &p_name) {
 	String name = p_name.validate_node_name();
 
+	ERR_FAIL_COND(name.is_empty());
+
 	if (data.unique_name_in_owner && data.owner) {
 		_release_unique_name_in_owner();
 	}
-	ERR_FAIL_COND_MSG(name.is_empty(), "New node name, cannot be empty.");
 	data.name = name;
 
 	if (data.parent) {
@@ -1760,11 +1761,11 @@ void Node::add_to_group(const StringName &p_identifier, bool p_persistent) {
 }
 
 void Node::remove_from_group(const StringName &p_identifier) {
-	ERR_FAIL_COND_MSG(!data.grouped.has(p_identifier), "Cannot find `" + p_identifier + "` group.");
+	ERR_FAIL_COND(!data.grouped.has(p_identifier));
 
 	Map<StringName, GroupData>::Element *E = data.grouped.find(p_identifier);
 
-	ERR_FAIL_COND_MSG(!E, "Node is not in " + p_identifier + " group.");
+	ERR_FAIL_COND(!E);
 
 	if (data.tree) {
 		data.tree->remove_from_group(E->key(), this);
