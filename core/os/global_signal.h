@@ -60,7 +60,11 @@ public:
 
 	void add_listener(const StringName &signal_name,const Callable &method_call);
 
+	void add_listener_using_callable(const Callable& signal_name_callalble, const Callable& method_call);
+
 	void remove_listener(const StringName &signal_name,const Callable &method_call);
+
+	Error do_callp(const StringName& signal_name, const Variant** p_args, int p_argcount, Callable::CallError& r_error);
 
 	Error do_call(const Variant** p_args, int p_argcount, Callable::CallError& r_error);
 

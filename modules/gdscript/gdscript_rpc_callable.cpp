@@ -45,6 +45,10 @@ uint32_t GDScriptRPCCallable::hash() const {
 	return h;
 }
 
+StringName GDScriptRPCCallable::get_method() const {
+	return method;	
+}
+
 String GDScriptRPCCallable::get_as_text() const {
 	String class_name = object->get_class();
 	Ref<Script> script = object->get_script();

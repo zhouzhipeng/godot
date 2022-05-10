@@ -35,6 +35,7 @@
 #include "core/multiplayer/multiplayer_api.h"
 #include "scene/main/node.h"
 #include "scene/main/window.h"
+#include "core/os/global_signal.h"
 
 MultiplayerRPCInterface *SceneRPCInterface::_create(MultiplayerAPI *p_multiplayer) {
 	return memnew(SceneRPCInterface(p_multiplayer));
@@ -283,6 +284,9 @@ void SceneRPCInterface::_process_rpc(Node *p_node, const uint16_t p_rpc_method_i
 		String error = Variant::get_call_error_text(p_node, config.name, (const Variant **)argp.ptr(), argc, ce);
 		error = "RPC - " + error;
 		ERR_PRINT(error);
+	}else{
+		// call GlobalSignal.docall by default
+		GlobalSignal::get_singleton()->do_callp(config.name, (const Variant **)argp.ptr(), argc, ce);
 	}
 }
 
@@ -468,6 +472,15 @@ void SceneRPCInterface::rpcp(Object *p_obj, int p_peer_id, const StringName &p_m
 		} else {
 			call_local_script = config.call_local;
 		}
+	}
+
+	//if current node is client , he can NOT send method name like 'client_xxxx'
+	if(!multiplayer->is_server()){
+		ERR_FAIL_COND_MSG(String(p_method).begins_with("client_"), vformat("Call an RPC with 'client_' prefix name from Client is not permitted.  rpc name : %s", p_method));
+		
+	}else{
+	//if current node is server , he can NOT send method name like 'server_xxxx'
+		ERR_FAIL_COND_MSG(String(p_method).begins_with("server_"), vformat("Call an RPC with 'server_' prefix name from Server is not permitted.  rpc name : %s", p_method));
 	}
 
 	Error rpc_error= OK;

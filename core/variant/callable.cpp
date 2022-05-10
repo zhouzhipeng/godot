@@ -121,6 +121,10 @@ ObjectID Callable::get_object_id() const {
 	}
 }
 
+StringName Callable::get_name() const {
+	return method;
+}
+
 StringName Callable::get_method() const {
 	if (is_custom()) {
 		return get_custom()->get_method();

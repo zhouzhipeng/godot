@@ -71,6 +71,12 @@ void GlobalSignal::add_listener(const StringName &signal_name, const Callable &m
 }
 
 
+void GlobalSignal::add_listener_using_callable(const  Callable &signal_name_callalble, const Callable &method_call)
+{
+	this->add_listener(signal_name_callalble.get_method(), method_call);
+}
+
+
 
 
 void GlobalSignal::remove_listener(const StringName &signal_name, const Callable &method_call)
@@ -98,20 +104,23 @@ void GlobalSignal::remove_listener(const StringName &signal_name, const Callable
 
 }
 
-
-Error GlobalSignal::do_call(const Variant **p_args, int p_argcount, Callable::CallError &r_error)
+Error GlobalSignal::do_callp(const StringName& signal_name, const Variant **p_args, int p_argcount, Callable::CallError &r_error)
 {
-	StringName signal = *p_args[0];
+
+
+	StringName signal = signal_name;
 
 	ERR_FAIL_COND_V_MSG(!this->_listeners.has(signal), ERR_INVALID_PARAMETER, vformat("GlobalSignal::emit error : signal_name %s has no listeners", signal));
+
+	print_line(vformat("GlobalSignal::do_callp signal_name: %s , p_args: %s, p_argcount : %s", signal_name, **p_args, p_argcount));
 
 	
 
 	const Variant **args = nullptr;
 
-	int argc = p_argcount - 1;
+	int argc = p_argcount;
 	if (argc) {
-		args = &p_args[1];
+		args = &p_args[0];
 	}
 
 	Array a = this->_listeners[signal];
@@ -142,6 +151,25 @@ Error GlobalSignal::do_call(const Variant **p_args, int p_argcount, Callable::Ca
 	return OK;
 }
 
+
+
+Error GlobalSignal::do_call(const Variant **p_args, int p_argcount, Callable::CallError &r_error)
+{
+	StringName signal = *p_args[0];
+
+	ERR_FAIL_COND_V_MSG(!this->_listeners.has(signal), ERR_INVALID_PARAMETER, vformat("GlobalSignal::emit error : signal_name %s has no listeners", signal));
+	
+
+	const Variant **args = nullptr;
+
+	int argc = p_argcount - 1;
+	if (argc) {
+		args = &p_args[1];
+	}
+
+	return this->do_callp(signal, args, argc, r_error);
+}
+
 void GlobalSignal::set_debug(bool debug)
 {
 	debug_log = debug;
@@ -151,13 +179,14 @@ void GlobalSignal::set_debug(bool debug)
 void GlobalSignal::_bind_methods() {
 	ClassDB::
 
+	ClassDB::bind_method(D_METHOD("listen", "from_callable", "method_call"), &GlobalSignal::add_listener_using_callable);
 	ClassDB::bind_method(D_METHOD("add_listener", "signal_name", "method_call"), &GlobalSignal::add_listener);
 	ClassDB::bind_method(D_METHOD("remove_listener", "signal_name", "method_call"), &GlobalSignal::remove_listener);
 	ClassDB::bind_method(D_METHOD("set_debug", "debug"), &GlobalSignal::set_debug);
 
 	{
 		MethodInfo mi;
-		mi.name = "emit_signal";
+		mi.name = "do_call";
 		mi.arguments.push_back(PropertyInfo(Variant::STRING_NAME, "signal_name"));
 		ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "do_call", &GlobalSignal::do_call, mi, varray(), false);
 	}

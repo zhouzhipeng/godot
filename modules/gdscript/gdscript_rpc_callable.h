@@ -47,6 +47,7 @@ class GDScriptRPCCallable : public CallableCustom {
 
 public:
 	uint32_t hash() const override;
+	StringName get_method() const override;
 	String get_as_text() const override;
 	CompareEqualFunc get_compare_equal_func() const override;
 	CompareLessFunc get_compare_less_func() const override;

@@ -88,6 +88,7 @@ public:
 
 	Object *get_object() const;
 	ObjectID get_object_id() const;
+	StringName get_name() const;
 	StringName get_method() const;
 	CallableCustom *get_custom() const;
 
