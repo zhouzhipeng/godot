@@ -71,8 +71,9 @@ void GlobalSignal::add_listener(const StringName &signal_name, const Callable &m
 }
 
 
-void GlobalSignal::add_listener_using_callable(const  Callable &signal_name_callalble, const Callable &method_call)
+void GlobalSignal::listen(const  Callable &signal_name_callalble, const Callable &method_call)
 {
+
 	this->add_listener(signal_name_callalble.get_method(), method_call);
 }
 
@@ -134,7 +135,7 @@ Error GlobalSignal::do_callp(const StringName& signal_name, const Variant **p_ar
 			c.call(args, argc, return_val, e);
 			print_line(vformat("GlobalSignal::emit signal: %s ok", signal));
 		}else{
-
+			//r_error.error= Callable::CallError::CALL_ERROR_INVALID_METHOD;
 			invalid_index.push_back(i);
 			ERR_PRINT( vformat("GlobalSignal::emit error : callable is not valid for signal : %s", signal));
 		}
@@ -179,7 +180,7 @@ void GlobalSignal::set_debug(bool debug)
 void GlobalSignal::_bind_methods() {
 	ClassDB::
 
-	ClassDB::bind_method(D_METHOD("listen", "from_callable", "method_call"), &GlobalSignal::add_listener_using_callable);
+	ClassDB::bind_method(D_METHOD("listen", "from_callable", "method_call"), &GlobalSignal::listen);
 	ClassDB::bind_method(D_METHOD("add_listener", "signal_name", "method_call"), &GlobalSignal::add_listener);
 	ClassDB::bind_method(D_METHOD("remove_listener", "signal_name", "method_call"), &GlobalSignal::remove_listener);
 	ClassDB::bind_method(D_METHOD("set_debug", "debug"), &GlobalSignal::set_debug);

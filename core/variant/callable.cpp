@@ -35,6 +35,7 @@
 #include "core/object/object.h"
 #include "core/object/ref_counted.h"
 #include "core/object/script_language.h"
+#include "core/os/global_signal.h"
 
 void Callable::call_deferred(const Variant **p_arguments, int p_argcount) const {
 	MessageQueue::get_singleton()->push_callablep(*this, p_arguments, p_argcount);
@@ -83,6 +84,17 @@ void Callable::rpc(int p_id, const Variant **p_arguments, int p_argcount, CallEr
 	} else {
 		custom->rpc(p_id, p_arguments, p_argcount, r_call_error);
 	}
+}
+
+void Callable::chain(const Callable& p_next)
+{
+	bool is_valid= GlobalSignal::is_valid_func_name( String(this->get_method()));
+
+	//check name
+	ERR_FAIL_COND_MSG(!is_valid, vformat("Callable::chain error ,'chain' only works with name starts with 'client_' or 'server_' or 'sig_'.  current function name is : '%s'", this->get_method()));
+
+	GlobalSignal::get_singleton()->listen(*this, p_next);
+	
 }
 
 Callable Callable::bind(const Variant **p_arguments, int p_argcount) const {

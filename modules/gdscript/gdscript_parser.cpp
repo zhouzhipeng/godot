@@ -3659,6 +3659,13 @@ bool GDScriptParser::network_annotations(const AnnotationNode *p_annotation, Nod
 	}
 	switch (p_node->type) {
 		case Node::FUNCTION: {
+
+			String func_name = (*((GDScriptParser::FunctionNode*)p_node)).identifier->name;
+			if(!func_name.begins_with("client_") && ! func_name.begins_with("server_")){
+				push_error(vformat("Invalid RPC method name. Function Name : '%s' Must start with 'client_' or 'server_'.", func_name), p_annotation);
+				return false;
+			}
+
 			FunctionNode *function = static_cast<FunctionNode *>(p_node);
 			/*if (function->rpc_config.rpc_mode != Multiplayer::RPC_MODE_DISABLED) {
 				push_error(R"(RPC annotations can only be used once per function.)", p_annotation);

@@ -284,9 +284,6 @@ void SceneRPCInterface::_process_rpc(Node *p_node, const uint16_t p_rpc_method_i
 		String error = Variant::get_call_error_text(p_node, config.name, (const Variant **)argp.ptr(), argc, ce);
 		error = "RPC - " + error;
 		ERR_PRINT(error);
-	}else{
-		// call GlobalSignal.docall by default
-		GlobalSignal::get_singleton()->do_callp(config.name, (const Variant **)argp.ptr(), argc, ce);
 	}
 }
 
@@ -482,6 +479,12 @@ void SceneRPCInterface::rpcp(Object *p_obj, int p_peer_id, const StringName &p_m
 	//if current node is server , he can NOT send method name like 'server_xxxx'
 		ERR_FAIL_COND_MSG(String(p_method).begins_with("server_"), vformat("Call an RPC with 'server_' prefix name from Server is not permitted.  rpc name : %s", p_method));
 	}
+
+	//if rpc method name is 'server_xxx' , then p_peer_id must be  1
+	if(String(p_method).begins_with("server_")){
+		ERR_FAIL_COND_MSG(p_peer_id!=1, vformat("Call an RPC with 'server_' prefix name must use rpc_id with peer_id=1 .  rpc name : %s", p_method));
+	}
+
 
 	Error rpc_error= OK;
 	if (p_peer_id != node_id) {

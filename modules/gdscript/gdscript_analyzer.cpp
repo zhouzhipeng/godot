@@ -39,6 +39,7 @@
 #include "core/templates/hash_map.h"
 #include "gdscript.h"
 #include "gdscript_utility_functions.h"
+#include "core/os/global_signal.h"
 
 static MethodInfo info_from_utility_func(const StringName &p_function) {
 	ERR_FAIL_COND_V(!Variant::has_utility_function(p_function), MethodInfo());
@@ -3897,6 +3898,17 @@ bool GDScriptAnalyzer::validate_call_arg(const List<GDScriptParser::DataType> &p
 #endif
 		}
 	}
+
+	//check 'chain()'
+	if(p_call->function_name=="chain"){
+		String callee_func_name = (*((GDScriptParser::IdentifierNode*)(*((GDScriptParser::Node*)&(*((GDScriptParser::ExpressionNode*)&(*((GDScriptParser::SubscriptNode*)p_call->callee)))))).next)).name;
+		if(!GlobalSignal::is_valid_func_name(callee_func_name)){
+			push_error(vformat(R"*(Invalid chain usage, the callee %s .)*", GlobalSignal::invalid_func_desc(callee_func_name)), p_call);
+			valid = false;
+		}
+	}
+
+
 	return valid;
 }
 

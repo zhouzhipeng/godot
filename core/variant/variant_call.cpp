@@ -1700,12 +1700,15 @@ static void _register_variant_builtin_methods() {
 	bind_method(Callable, get_method, sarray(), varray());
 	bind_method(Callable, hash, sarray(), varray());
 	bind_method(Callable, unbind, sarray("argcount"), varray());
+	bind_method(Callable, chain, sarray("next"), varray());
+
 
 	bind_custom(Callable, call, _VariantCall::func_Callable_call, true, Variant);
 	bind_custom(Callable, call_deferred, _VariantCall::func_Callable_call_deferred, false, Variant);
 	bind_custom(Callable, rpc, _VariantCall::func_Callable_rpc, false, Variant);
 	bind_custom1(Callable, rpc_id, _VariantCall::func_Callable_rpc_id, Variant::INT, "peer_id");
 	bind_custom(Callable, bind, _VariantCall::func_Callable_bind, true, Callable);
+
 
 	/* Signal */
 

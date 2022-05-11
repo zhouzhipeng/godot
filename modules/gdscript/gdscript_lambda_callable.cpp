@@ -47,6 +47,11 @@ uint32_t GDScriptLambdaCallable::hash() const {
 	return h;
 }
 
+StringName GDScriptLambdaCallable::get_method() const
+{
+	return "(anonymous lambda)";
+}
+
 String GDScriptLambdaCallable::get_as_text() const {
 	if (function->get_name() != StringName()) {
 		return function->get_name().operator String() + "(lambda)";
@@ -106,6 +111,11 @@ bool GDScriptLambdaSelfCallable::compare_less(const CallableCustom *p_a, const C
 
 uint32_t GDScriptLambdaSelfCallable::hash() const {
 	return h;
+}
+
+StringName GDScriptLambdaSelfCallable::get_method() const
+{
+	return "(anonymous lambda)";
 }
 
 String GDScriptLambdaSelfCallable::get_as_text() const {

@@ -72,6 +72,8 @@ public:
 
 	void rpc(int p_id, const Variant **p_arguments, int p_argcount, CallError &r_call_error) const;
 
+	void chain(const Callable& p_next);
+
 	_FORCE_INLINE_ bool is_null() const {
 		return method == StringName() && object == 0;
 	}

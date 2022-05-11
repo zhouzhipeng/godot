@@ -146,6 +146,13 @@
 				Returns a copy of this [Callable] with the arguments unbound. Calling the returned [Callable] will call the method without the extra arguments that are supplied in the [Callable] on which you are calling this method.
 			</description>
 		</method>
+		<method name="chain" qualifiers="const">
+			<return type="void" />
+			<argument index="0" name="next" type="Callable" />
+			<description>
+				Add a chain to the Callable , only current functiom name starts with 'client_' or 'server_' or 'sig_'  will work, 'next' will be called automatically when current callable is called.
+			</description>
+		</method>
 	</methods>
 	<operators>
 		<operator name="operator !=">

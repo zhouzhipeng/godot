@@ -60,7 +60,7 @@ public:
 
 	void add_listener(const StringName &signal_name,const Callable &method_call);
 
-	void add_listener_using_callable(const Callable& signal_name_callalble, const Callable& method_call);
+	void listen(const Callable& signal_name_callalble, const Callable& method_call);
 
 	void remove_listener(const StringName &signal_name,const Callable &method_call);
 
@@ -70,6 +70,14 @@ public:
 
 	void set_debug(bool debug);
 
+	static __forceinline bool is_valid_func_name(String func_name){
+		bool is_valid= func_name.begins_with("client_") || func_name.begins_with("server_") || func_name.begins_with("sig_");
+		return is_valid;
+	}
+
+	static __forceinline String invalid_func_desc(String func_name){
+		return vformat("Function name : '%s' must start with 'sig_' or 'server_' or 'client_'", func_name);
+	}
 
 	GlobalSignal();
 	virtual ~GlobalSignal();

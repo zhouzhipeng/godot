@@ -38,6 +38,8 @@
 #include "core/os/os.h"
 #include "core/string/print_string.h"
 #include "core/string/translation.h"
+#include "core/os/global_signal.h"
+
 
 #ifdef DEBUG_ENABLED
 
@@ -816,6 +818,12 @@ Variant Object::callp(const StringName &p_method, const Variant **p_args, int p_
 
 	if (script_instance) {
 		ret = script_instance->callp(p_method, p_args, p_argcount, r_error);
+
+		// if the method's name starts with 'sig_' then do a GlobalSignal call by default.
+		if(r_error.error ==Callable::CallError::CALL_OK && GlobalSignal::is_valid_func_name(String(p_method))){
+			GlobalSignal::get_singleton()->do_callp(p_method,  p_args, p_argcount, r_error);
+		}
+
 		//force jumptable
 		switch (r_error.error) {
 			case Callable::CallError::CALL_OK:
