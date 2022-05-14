@@ -3508,10 +3508,25 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 	}
 
 	if(p_annotation->name == "@export_sig"){
+		String arg = String(p_annotation->resolved_arguments[0]);
 
-		const ProjectSettings::AutoloadInfo &autoload = ProjectSettings::get_singleton()->get_autoload("G");
-		Ref<Resource> var = ResourceLoader::load(autoload.path);
+		const ProjectSettings::AutoloadInfo &autoload = ProjectSettings::get_singleton()->get_autoload(arg);
+		Error err;
+		Ref<Resource> var = ResourceLoader::load(autoload.path, "", ResourceFormatLoader::CACHE_MODE_IGNORE, &err);
+
+		if(err!=OK){
+			push_error(vformat("@export_sig  argument '%s' autoload resource not valid, err: %s.",arg,err) , p_annotation);
+			return false;
+		}
+
+
 		Ref<Script> script(var);
+		if(!script.is_valid()){
+			push_error(vformat("@export_sig  argument '%s'  is not congfigured in autoloads",arg) , p_annotation);
+			return false;
+		}
+
+		
 
 		Object *o=ClassDB::instantiate("Node");
 		o->set_script(script);
@@ -3519,13 +3534,32 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 		Array methods =  o->_get_script_method_list_bind();
 		memdelete(o);
 
-		print_line(vformat("fuck sss >>  %s" , methods));
+		String s ;
+		for(int i=0;i< methods.size(); i++){
+
+			Dictionary d = methods.get(i);
+			String name = d["name"];
+			if(!name.begins_with("sig_")){
+				continue;
+			}
+			
+			s+= name + ",";
+			
+			
+		}
+
+		if(!s.is_empty()){
+			s = s.substr(0, s.length()-1);
+		}
+
+
+		//print_line(vformat("fuck sss >>  %s" , methods));
 
 		variable->exported = true;
 
 		variable->export_info.type = Variant::STRING;
 		variable->export_info.hint = PROPERTY_HINT_ENUM;
-		variable->export_info.hint_string = "TEST1,TEST2";
+		variable->export_info.hint_string = s;
 
 		return true;
 	}

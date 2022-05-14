@@ -4637,6 +4637,9 @@ void EditorNode::_load_docks() {
 	_load_open_scenes_from_config(config, "EditorNode");
 
 	editor_data.set_plugin_window_layout(config);
+
+	//load my_layout to prevent autoload layout bug.
+	_layout_menu_option(4);
 }
 
 void EditorNode::_update_dock_slots_visibility() {
