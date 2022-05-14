@@ -116,6 +116,9 @@ GDScriptParser::GDScriptParser() {
 	// Export annotations.
 	register_annotation(MethodInfo("@export"), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_NONE, Variant::NIL>);
 	register_annotation(MethodInfo("@export_enum", { Variant::STRING, "names" }), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_ENUM, Variant::INT>, 0, true);
+
+	register_annotation(MethodInfo("@export_sig", { Variant::STRING, "names" }), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_METHOD_OF_SCRIPT, Variant::STRING>, 0, true);
+
 	register_annotation(MethodInfo("@export_file", { Variant::STRING, "filter" }), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_FILE, Variant::STRING>, 1, true);
 	register_annotation(MethodInfo("@export_dir"), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_DIR, Variant::STRING>);
 	register_annotation(MethodInfo("@export_global_file", { Variant::STRING, "filter" }), AnnotationInfo::VARIABLE, &GDScriptParser::export_annotations<PROPERTY_HINT_GLOBAL_FILE, Variant::STRING>, 1, true);
@@ -3508,6 +3511,30 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 		push_error(vformat(R"(Annotation "%s" cannot be used with another "@export" annotation.)", p_annotation->name), p_annotation);
 		return false;
 	}
+
+	if(p_annotation->name == "@export_sig"){
+
+		const ProjectSettings::AutoloadInfo &autoload = ProjectSettings::get_singleton()->get_autoload("G");
+		Ref<Resource> var = ResourceLoader::load(autoload.path);
+		Ref<Script> script(var);
+
+		Object *o=ClassDB::instantiate("Node");
+		o->set_script(script);
+
+		Array methods =  o->_get_script_method_list_bind();
+		memdelete(o);
+
+		print_line(vformat("fuck sss >>  %s" , methods));
+
+		variable->exported = true;
+
+		variable->export_info.type = Variant::STRING;
+		variable->export_info.hint = PROPERTY_HINT_ENUM;
+		variable->export_info.hint_string = "TEST1,TEST2";
+
+		return true;
+	}
+
 
 	variable->exported = true;
 

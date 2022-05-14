@@ -612,6 +612,8 @@ protected:
 	Array _get_property_list_bind() const;
 	Array _get_method_list_bind() const;
 
+
+
 	void _clear_internal_resource_paths(const Variant &p_var);
 
 	friend class ClassDB;
@@ -622,7 +624,7 @@ protected:
 public: // Should be protected, but bug in clang++.
 	static void initialize_class();
 	_FORCE_INLINE_ static void register_custom_data_to_otdb() {}
-
+	Array _get_script_method_list_bind() const;
 public:
 	void notify_property_list_changed();
 
@@ -717,6 +719,8 @@ public:
 
 	bool has_method(const StringName &p_method) const;
 	void get_method_list(List<MethodInfo> *p_list) const;
+	void get_script_method_list(List<MethodInfo> *p_list) const;
+
 	Variant callv(const StringName &p_method, const Array &p_args);
 	virtual Variant callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error);
 

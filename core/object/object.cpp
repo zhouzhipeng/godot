@@ -689,6 +689,13 @@ void Object::get_method_list(List<MethodInfo> *p_list) const {
 	}
 }
 
+void Object::get_script_method_list(List<MethodInfo> *p_list) const {
+	if (script_instance) {
+		script_instance->get_method_list(p_list);
+	}
+}
+
+
 Variant Object::_call_bind(const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
 	if (p_argcount < 1) {
 		r_error.error = Callable::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS;
@@ -998,6 +1005,22 @@ Array Object::_get_method_list_bind() const {
 
 	return ret;
 }
+
+
+Array Object::_get_script_method_list_bind() const {
+	List<MethodInfo> ml;
+	get_script_method_list(&ml);
+	Array ret;
+
+	for (List<MethodInfo>::Element *E = ml.front(); E; E = E->next()) {
+		Dictionary d = E->get();
+		//va.push_back(d);
+		ret.push_back(d);
+	}
+
+	return ret;
+}
+
 
 Vector<StringName> Object::_get_meta_list_bind() const {
 	Vector<StringName> _metaret;
@@ -1562,6 +1585,8 @@ void Object::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_indexed", "property"), &Object::_get_indexed_bind);
 	ClassDB::bind_method(D_METHOD("get_property_list"), &Object::_get_property_list_bind);
 	ClassDB::bind_method(D_METHOD("get_method_list"), &Object::_get_method_list_bind);
+	ClassDB::bind_method(D_METHOD("get_script_method_list"), &Object::_get_script_method_list_bind);
+
 	ClassDB::bind_method(D_METHOD("notification", "what", "reversed"), &Object::notification, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("to_string"), &Object::to_string);
 	ClassDB::bind_method(D_METHOD("get_instance_id"), &Object::get_instance_id);
