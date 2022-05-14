@@ -2371,9 +2371,8 @@ Array TextServerAdvanced::font_get_glyph_list(const RID &p_font_rid, const Vecto
 
 	Array ret;
 	const HashMap<int32_t, FontGlyph> &gl = fd->cache[size]->glyph_map;
-	const int32_t *E = nullptr;
-	while ((E = gl.next(E))) {
-		ret.push_back(*E);
+	for (const KeyValue<int32_t, FontGlyph> &E : gl) {
+		ret.push_back(E.key);
 	}
 	return ret;
 }
@@ -2770,7 +2769,7 @@ Vector2 TextServerAdvanced::font_get_kerning(const RID &p_font_rid, int64_t p_si
 
 	ERR_FAIL_COND_V(!_ensure_cache_for_size(fd, size), Vector2());
 
-	const Map<Vector2i, Vector2> &kern = fd->cache[size]->kerning_map;
+	const HashMap<Vector2i, Vector2, VariantHasher, VariantComparator> &kern = fd->cache[size]->kerning_map;
 
 	if (kern.has(p_glyph_pair)) {
 		if (fd->msdf) {
@@ -2828,7 +2827,7 @@ bool TextServerAdvanced::font_has_char(const RID &p_font_rid, int64_t p_char) co
 	if (fd->cache.is_empty()) {
 		ERR_FAIL_COND_V(!_ensure_cache_for_size(fd, fd->msdf ? Vector2i(fd->msdf_source_size, 0) : Vector2i(16, 0)), false);
 	}
-	FontDataForSizeAdvanced *at_size = fd->cache.front()->get();
+	FontDataForSizeAdvanced *at_size = fd->cache.begin()->value;
 
 #ifdef MODULE_FREETYPE_ENABLED
 	if (at_size && at_size->face) {
@@ -2846,7 +2845,7 @@ String TextServerAdvanced::font_get_supported_chars(const RID &p_font_rid) const
 	if (fd->cache.is_empty()) {
 		ERR_FAIL_COND_V(!_ensure_cache_for_size(fd, fd->msdf ? Vector2i(fd->msdf_source_size, 0) : Vector2i(16, 0)), String());
 	}
-	FontDataForSizeAdvanced *at_size = fd->cache.front()->get();
+	FontDataForSizeAdvanced *at_size = fd->cache.begin()->value;
 
 	String chars;
 #ifdef MODULE_FREETYPE_ENABLED
@@ -2864,9 +2863,8 @@ String TextServerAdvanced::font_get_supported_chars(const RID &p_font_rid) const
 #endif
 	if (at_size) {
 		const HashMap<int32_t, FontGlyph> &gl = at_size->glyph_map;
-		const int32_t *E = nullptr;
-		while ((E = gl.next(E))) {
-			chars = chars + String::chr(*E);
+		for (const KeyValue<int32_t, FontGlyph> &E : gl) {
+			chars = chars + String::chr(E.key);
 		}
 	}
 	return chars;
@@ -4577,7 +4575,7 @@ bool TextServerAdvanced::shaped_text_update_justification_ops(const RID &p_shape
 
 	Glyph *sd_glyphs = sd->glyphs.ptrw();
 	int sd_size = sd->glyphs.size();
-	if (sd->jstops.size() > 0) {
+	if (!sd->jstops.is_empty()) {
 		for (int i = 0; i < sd_size; i++) {
 			if (sd_glyphs[i].count > 0) {
 				char32_t c = sd->text[sd_glyphs[i].start - sd->start];

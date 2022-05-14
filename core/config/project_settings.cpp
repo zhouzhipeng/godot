@@ -1091,7 +1091,7 @@ bool ProjectSettings::has_custom_feature(const String &p_feature) const {
 	return custom_features.has(p_feature);
 }
 
-OrderedHashMap<StringName, ProjectSettings::AutoloadInfo> ProjectSettings::get_autoload_list() const {
+const HashMap<StringName, ProjectSettings::AutoloadInfo> &ProjectSettings::get_autoload_list() const {
 	return autoloads;
 }
 
@@ -1135,13 +1135,13 @@ void ProjectSettings::_bind_methods() {
 
 void ProjectSettings::_add_builtin_input_map() {
 	if (InputMap::get_singleton()) {
-		OrderedHashMap<String, List<Ref<InputEvent>>> builtins = InputMap::get_singleton()->get_builtins();
+		HashMap<String, List<Ref<InputEvent>>> builtins = InputMap::get_singleton()->get_builtins();
 
-		for (OrderedHashMap<String, List<Ref<InputEvent>>>::Element E = builtins.front(); E; E = E.next()) {
+		for (KeyValue<String, List<Ref<InputEvent>>> &E : builtins) {
 			Array events;
 
 			// Convert list of input events into array
-			for (List<Ref<InputEvent>>::Element *I = E.get().front(); I; I = I->next()) {
+			for (List<Ref<InputEvent>>::Element *I = E.value.front(); I; I = I->next()) {
 				events.push_back(I->get());
 			}
 
@@ -1149,7 +1149,7 @@ void ProjectSettings::_add_builtin_input_map() {
 			action["deadzone"] = Variant(0.5f);
 			action["events"] = events;
 
-			String action_name = "input/" + E.key();
+			String action_name = "input/" + E.key;
 			GLOBAL_DEF(action_name, action);
 			input_presets.push_back(action_name);
 		}
@@ -1175,6 +1175,22 @@ ProjectSettings::ProjectSettings() {
 	GLOBAL_DEF("application/config/use_custom_user_dir", false);
 	GLOBAL_DEF("application/config/custom_user_dir_name", "");
 	GLOBAL_DEF("application/config/project_settings_override", "");
+
+	GLOBAL_DEF_BASIC("display/window/size/viewport_width", 1024);
+	custom_prop_info["display/window/size/viewport_width"] = PropertyInfo(Variant::INT, "display/window/size/viewport_width", PROPERTY_HINT_RANGE, "0,7680,1,or_greater"); // 8K resolution
+
+	GLOBAL_DEF_BASIC("display/window/size/viewport_height", 600);
+	custom_prop_info["display/window/size/viewport_height"] = PropertyInfo(Variant::INT, "display/window/size/viewport_height", PROPERTY_HINT_RANGE, "0,4320,1,or_greater"); // 8K resolution
+
+	GLOBAL_DEF_BASIC("display/window/size/resizable", true);
+	GLOBAL_DEF_BASIC("display/window/size/borderless", false);
+	GLOBAL_DEF_BASIC("display/window/size/fullscreen", false);
+	GLOBAL_DEF("display/window/size/always_on_top", false);
+	GLOBAL_DEF("display/window/size/window_width_override", 0);
+	custom_prop_info["display/window/size/window_width_override"] = PropertyInfo(Variant::INT, "display/window/size/window_width_override", PROPERTY_HINT_RANGE, "0,7680,1,or_greater"); // 8K resolution
+	GLOBAL_DEF("display/window/size/window_height_override", 0);
+	custom_prop_info["display/window/size/window_height_override"] = PropertyInfo(Variant::INT, "display/window/size/window_height_override", PROPERTY_HINT_RANGE, "0,4320,1,or_greater"); // 8K resolution
+
 	GLOBAL_DEF_BASIC("audio/buses/default_bus_layout", "res://default_bus_layout.tres");
 	custom_prop_info["audio/buses/default_bus_layout"] = PropertyInfo(Variant::STRING, "audio/buses/default_bus_layout", PROPERTY_HINT_FILE, "*.tres");
 
