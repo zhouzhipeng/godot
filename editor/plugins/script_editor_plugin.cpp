@@ -1028,14 +1028,12 @@ void ScriptEditor::_scene_saved_callback(const String &p_path) {
 }
 
 void ScriptEditor::_trigger_live_script_reload() {
-	if (!pending_auto_reload && auto_reload_running_scripts) {
-		call_deferred(SNAME("_live_auto_reload_running_scripts"));
-		pending_auto_reload = true;
+	if (auto_reload_running_scripts) {
+		_live_auto_reload_running_scripts();
 	}
 }
 
 void ScriptEditor::_live_auto_reload_running_scripts() {
-	pending_auto_reload = false;
 	EditorDebuggerNode::get_singleton()->reload_scripts();
 }
 
@@ -1649,8 +1647,8 @@ void ScriptEditor::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_WM_WINDOW_FOCUS_IN: {
-			_test_script_times_on_disk();
 			_update_modified_scripts_for_external_editor();
+			_test_script_times_on_disk();
 		} break;
 
 		case CanvasItem::NOTIFICATION_VISIBILITY_CHANGED: {
@@ -3588,8 +3586,9 @@ void ScriptEditor::_start_find_in_files(bool with_replace) {
 }
 
 void ScriptEditor::_on_find_in_files_modified_files(PackedStringArray paths) {
-	_test_script_times_on_disk();
+	
 	_update_modified_scripts_for_external_editor();
+	_test_script_times_on_disk();
 }
 
 void ScriptEditor::_filter_scripts_text_changed(const String &p_newtext) {

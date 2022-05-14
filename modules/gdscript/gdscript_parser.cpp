@@ -3813,7 +3813,12 @@ String GDScriptParser::DataType::to_string() const {
 				return GDScript::get_class_static();
 			}
 			if (class_type->identifier != nullptr) {
-				return class_type->identifier->name.operator String();
+				try{
+					return class_type->identifier->name.operator String();
+				}catch (...){
+					ERR_FAIL_COND_V_MSG(true, class_type->fqcn, " class_type->identifier is not valid pointer");
+				}
+				
 			}
 			return class_type->fqcn;
 		case SCRIPT: {
