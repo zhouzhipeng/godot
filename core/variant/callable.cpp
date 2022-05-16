@@ -64,10 +64,14 @@ void Callable::call(const Variant **p_arguments, int p_argcount, Variant &r_retu
 	}
 
 	if(r_call_error.error !=CallError::CALL_OK ){
+
 		String err_msg = Variant::get_callable_error_text(*this, p_arguments, p_argcount, r_call_error);
 		String msg =  vformat("Callable::call error ! CallError : %s", err_msg);
-		print_line(msg);
-		ERR_PRINT(msg);
+		if(!msg.contains("ScriptEditor::") && !msg.contains("TextEdit::")){ //should be a bug in scripteditor auto save....
+			print_line(msg);
+			ERR_PRINT(msg);
+		}
+	
 		
 	}
 }
