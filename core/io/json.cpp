@@ -55,7 +55,7 @@ String JSON::_make_indent(const String &p_indent, int p_size) {
 	return indent_text;
 }
 
-String JSON::_stringify(const Variant &p_var, const String &p_indent, int p_cur_indent, bool p_sort_keys, Set<const void *> &p_markers, bool p_full_precision) {
+String JSON::_stringify(const Variant &p_var, const String &p_indent, int p_cur_indent, bool p_sort_keys, RBSet<const void *> &p_markers, bool p_full_precision) {
 	String colon = ":";
 	String end_statement = "";
 
