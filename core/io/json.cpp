@@ -55,7 +55,7 @@ String JSON::_make_indent(const String &p_indent, int p_size) {
 	return indent_text;
 }
 
-String JSON::_stringify(const Variant &p_var, const String &p_indent, int p_cur_indent, bool p_sort_keys, Set<const void *> &p_markers, bool p_full_precision) {
+String JSON::_stringify(const Variant &p_var, const String &p_indent, int p_cur_indent, bool p_sort_keys, RBSet<const void *> &p_markers, bool p_full_precision) {
 	String colon = ":";
 	String end_statement = "";
 
@@ -539,7 +539,7 @@ Error JSON::parse(const String &p_json_string) {
 String JSON::stringify(const Variant &p_var, const String &p_indent, bool p_sort_keys, bool p_full_precision) {
 	Ref<JSON> jason;
 	jason.instantiate();
-	Set<const void *> markers;
+	RBSet<const void *> markers;
 	return jason->_stringify(p_var, p_indent, 0, p_sort_keys, markers, p_full_precision);
 }
 

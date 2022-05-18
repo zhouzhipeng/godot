@@ -187,9 +187,9 @@ bool ShaderMaterial::_get(const StringName &p_name, Variant &r_ret) const {
 		}
 
 		if (pr) {
-			const Map<StringName, Variant>::Element *E = param_cache.find(pr);
+			HashMap<StringName, Variant>::ConstIterator E = param_cache.find(pr);
 			if (E) {
-				r_ret = E->get();
+				r_ret = E->value;
 			} else {
 				r_ret = Variant();
 			}
@@ -348,7 +348,7 @@ ShaderMaterial::~ShaderMaterial() {
 
 Mutex BaseMaterial3D::material_mutex;
 SelfList<BaseMaterial3D>::List *BaseMaterial3D::dirty_materials = nullptr;
-Map<BaseMaterial3D::MaterialKey, BaseMaterial3D::ShaderData> BaseMaterial3D::shader_map;
+HashMap<BaseMaterial3D::MaterialKey, BaseMaterial3D::ShaderData, BaseMaterial3D::MaterialKey> BaseMaterial3D::shader_map;
 BaseMaterial3D::ShaderNames *BaseMaterial3D::shader_names = nullptr;
 
 void BaseMaterial3D::init_shaders() {
@@ -1788,8 +1788,6 @@ void BaseMaterial3D::_validate_property(PropertyInfo &property) const {
 
 	_validate_high_end("refraction", property);
 	_validate_high_end("subsurf_scatter", property);
-	_validate_high_end("anisotropy", property);
-	_validate_high_end("clearcoat", property);
 	_validate_high_end("heightmap", property);
 
 	if (property.name.begins_with("particles_anim_") && billboard_mode != BILLBOARD_PARTICLES) {
