@@ -158,8 +158,8 @@ Vector<RID> PhysicsRayQueryParameters2D::get_exclude() const {
 	Vector<RID> ret;
 	ret.resize(parameters.exclude.size());
 	int idx = 0;
-	for (RBSet<RID>::Element *E = parameters.exclude.front(); E; E = E->next()) {
-		ret.write[idx++] = E->get();
+	for (const RID &E : parameters.exclude) {
+		ret.write[idx++] = E;
 	}
 	return ret;
 }
@@ -208,8 +208,8 @@ Vector<RID> PhysicsPointQueryParameters2D::get_exclude() const {
 	Vector<RID> ret;
 	ret.resize(parameters.exclude.size());
 	int idx = 0;
-	for (RBSet<RID>::Element *E = parameters.exclude.front(); E; E = E->next()) {
-		ret.write[idx++] = E->get();
+	for (const RID &E : parameters.exclude) {
+		ret.write[idx++] = E;
 	}
 	return ret;
 }
@@ -267,8 +267,8 @@ Vector<RID> PhysicsShapeQueryParameters2D::get_exclude() const {
 	Vector<RID> ret;
 	ret.resize(parameters.exclude.size());
 	int idx = 0;
-	for (RBSet<RID>::Element *E = parameters.exclude.front(); E; E = E->next()) {
-		ret.write[idx++] = E->get();
+	for (const RID &E : parameters.exclude) {
+		ret.write[idx++] = E;
 	}
 	return ret;
 }
@@ -861,7 +861,7 @@ PhysicsServer2D::~PhysicsServer2D() {
 Vector<PhysicsServer2DManager::ClassInfo> PhysicsServer2DManager::physics_2d_servers;
 int PhysicsServer2DManager::default_server_id = -1;
 int PhysicsServer2DManager::default_server_priority = -1;
-const String PhysicsServer2DManager::setting_property_name("physics/2d/physics_engine");
+const String PhysicsServer2DManager::setting_property_name(PNAME("physics/2d/physics_engine"));
 
 void PhysicsServer2DManager::on_servers_changed() {
 	String physics_servers("DEFAULT");
