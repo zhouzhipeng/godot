@@ -113,8 +113,9 @@ Error GlobalSignal::do_callp(const StringName& signal_name, const Variant **p_ar
 
 	ERR_FAIL_COND_V_MSG(!this->_listeners.has(signal), ERR_INVALID_PARAMETER, vformat("GlobalSignal::emit error : signal_name %s has no listeners", signal));
 
-	print_line(vformat("GlobalSignal::do_callp signal_name: %s , p_args: %s, p_argcount : %s", signal_name, **p_args, p_argcount));
-
+	if(debug_log){
+		print_line(vformat("GlobalSignal::do_callp signal_name: %s , p_args: %s, p_argcount : %s", signal_name, **p_args, p_argcount));
+	}
 	
 
 	const Variant **args = nullptr;
@@ -133,7 +134,9 @@ Error GlobalSignal::do_callp(const StringName& signal_name, const Variant **p_ar
 			Variant return_val;
 			Callable::CallError e;
 			c.call(args, argc, return_val, e);
-			print_line(vformat("GlobalSignal::emit signal: %s ok", signal));
+			if(debug_log){
+				print_line(vformat("GlobalSignal::emit signal: %s ok", signal));
+			}
 		}else{
 			//r_error.error= Callable::CallError::CALL_ERROR_INVALID_METHOD;
 			invalid_index.push_back(i);
