@@ -2229,17 +2229,27 @@ void TextMesh::_generate_glyph_mesh_data(uint32_t p_hash, const Glyph &p_gl) con
 				}
 			} else if (points[j].z == TextServer::CONTOUR_CURVE_TAG_OFF_CUBIC) {
 				// Cubic Bezier arc.
+				int32_t cur = j;
 				int32_t next1 = (j == end) ? start : (j + 1);
 				int32_t next2 = (next1 == end) ? start : (next1 + 1);
 				int32_t prev = (j == start) ? end : (j - 1);
 
 				// There must be exactly two OFF points and two ON points for each cubic arc.
+				if (points[prev].z != TextServer::CONTOUR_CURVE_TAG_ON) {
+					cur = (cur == 0) ? end : cur - 1;
+					next1 = (next1 == 0) ? end : next1 - 1;
+					next2 = (next2 == 0) ? end : next2 - 1;
+					prev = (prev == 0) ? end : prev - 1;
+				} else {
+					j++;
+				}
 				ERR_FAIL_COND_MSG(points[prev].z != TextServer::CONTOUR_CURVE_TAG_ON, vformat("Invalid cubic arc point sequence at %d:%d", i, prev));
+				ERR_FAIL_COND_MSG(points[cur].z != TextServer::CONTOUR_CURVE_TAG_OFF_CUBIC, vformat("Invalid cubic arc point sequence at %d:%d", i, cur));
 				ERR_FAIL_COND_MSG(points[next1].z != TextServer::CONTOUR_CURVE_TAG_OFF_CUBIC, vformat("Invalid cubic arc point sequence at %d:%d", i, next1));
 				ERR_FAIL_COND_MSG(points[next2].z != TextServer::CONTOUR_CURVE_TAG_ON, vformat("Invalid cubic arc point sequence at %d:%d", i, next2));
 
 				Vector2 p0 = Vector2(points[prev].x, points[prev].y);
-				Vector2 p1 = Vector2(points[j].x, points[j].y);
+				Vector2 p1 = Vector2(points[cur].x, points[cur].y);
 				Vector2 p2 = Vector2(points[next1].x, points[next1].y);
 				Vector2 p3 = Vector2(points[next2].x, points[next2].y);
 
@@ -2257,7 +2267,6 @@ void TextMesh::_generate_glyph_mesh_data(uint32_t p_hash, const Glyph &p_gl) con
 					polygon.push_back(ContourPoint(p, false));
 					t += step;
 				}
-				i++;
 			} else {
 				ERR_FAIL_MSG(vformat("Unknown point tag at %d:%d", i, j));
 			}
@@ -2393,6 +2402,10 @@ void TextMesh::_create_mesh_array(Array &p_arr) const {
 
 	Vector2 offset_pre = offset;
 	for (int i = 0; i < gl_size; i++) {
+		if (glyphs[i].index == 0) {
+			offset.x += glyphs[i].advance * pixel_size * glyphs[i].repeat;
+			continue;
+		}
 		if (glyphs[i].font_rid != RID()) {
 			uint32_t hash = hash_one_uint64(glyphs[i].font_rid.get_id());
 			hash = hash_djb2_one_32(glyphs[i].index, hash);
@@ -2448,6 +2461,10 @@ void TextMesh::_create_mesh_array(Array &p_arr) const {
 	int32_t p_idx = 0;
 	int32_t i_idx = 0;
 	for (int i = 0; i < gl_size; i++) {
+		if (glyphs[i].index == 0) {
+			offset.x += glyphs[i].advance * pixel_size * glyphs[i].repeat;
+			continue;
+		}
 		if (glyphs[i].font_rid != RID()) {
 			uint32_t hash = hash_one_uint64(glyphs[i].font_rid.get_id());
 			hash = hash_djb2_one_32(glyphs[i].index, hash);
@@ -2587,7 +2604,7 @@ void TextMesh::_create_mesh_array(Array &p_arr) const {
 	}
 
 	if (p_size == 0) {
-		// If empty, add single trinagle to suppress errors.
+		// If empty, add single triangle to suppress errors.
 		vertices.push_back(Vector3());
 		normals.push_back(Vector3());
 		uvs.push_back(Vector2());
