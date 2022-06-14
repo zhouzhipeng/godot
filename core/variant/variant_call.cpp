@@ -1402,8 +1402,8 @@ static void _register_variant_builtin_methods() {
 	bind_method(String, to_upper, sarray(), varray());
 	bind_method(String, to_lower, sarray(), varray());
 
-	bind_method(String, left, sarray("position"), varray());
-	bind_method(String, right, sarray("position"), varray());
+	bind_method(String, left, sarray("length"), varray());
+	bind_method(String, right, sarray("length"), varray());
 
 	bind_method(String, strip_edges, sarray("left", "right"), varray(true, true));
 	bind_method(String, strip_escapes, sarray(), varray());
@@ -1471,6 +1471,10 @@ static void _register_variant_builtin_methods() {
 	bind_static_method(String, num_uint64, sarray("number", "base", "capitalize_hex"), varray(10, false));
 	bind_static_method(String, chr, sarray("char"), varray());
 	bind_static_method(String, humanize_size, sarray("size"), varray());
+
+	/* StringName */
+
+	bind_method(StringName, hash, sarray(), varray());
 
 	/* Vector2 */
 
@@ -1671,6 +1675,8 @@ static void _register_variant_builtin_methods() {
 	bind_static_method(Color, get_named_color, sarray("idx"), varray());
 	bind_static_method(Color, from_string, sarray("str", "default"), varray());
 	bind_static_method(Color, from_hsv, sarray("h", "s", "v", "alpha"), varray(1.0));
+	bind_static_method(Color, from_ok_hsl, sarray("h", "s", "l", "alpha"), varray(1.0));
+
 	bind_static_method(Color, from_rgbe9995, sarray("rgbe"), varray());
 
 	/* RID */
@@ -1684,6 +1690,7 @@ static void _register_variant_builtin_methods() {
 	bind_method(NodePath, get_name_count, sarray(), varray());
 	bind_method(NodePath, get_name, sarray("idx"), varray());
 	bind_method(NodePath, get_subname_count, sarray(), varray());
+	bind_method(NodePath, hash, sarray(), varray());
 	bind_method(NodePath, get_subname, sarray("idx"), varray());
 	bind_method(NodePath, get_concatenated_subnames, sarray(), varray());
 	bind_method(NodePath, get_as_property_path, sarray(), varray());
@@ -1811,6 +1818,7 @@ static void _register_variant_builtin_methods() {
 	bind_method(Dictionary, size, sarray(), varray());
 	bind_method(Dictionary, is_empty, sarray(), varray());
 	bind_method(Dictionary, clear, sarray(), varray());
+	bind_method(Dictionary, merge, sarray("dictionary", "overwrite"), varray(false));
 	bind_method(Dictionary, has, sarray("key"), varray());
 	bind_method(Dictionary, has_all, sarray("keys"), varray());
 	bind_method(Dictionary, erase, sarray("key"), varray());
