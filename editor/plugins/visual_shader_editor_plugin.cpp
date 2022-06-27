@@ -1102,27 +1102,6 @@ void VisualShaderEditor::edit(VisualShader *p_visual_shader) {
 		if (!visual_shader->is_connected("changed", ce)) {
 			visual_shader->connect("changed", ce);
 		}
-#ifndef DISABLE_DEPRECATED
-		Dictionary engine_version = Engine::get_singleton()->get_version_info();
-		static Array components;
-		if (components.is_empty()) {
-			components.push_back("major");
-			components.push_back("minor");
-		}
-		const Dictionary vs_version = visual_shader->get_engine_version();
-		if (!vs_version.has_all(components)) {
-			visual_shader->update_engine_version(engine_version);
-			print_line(vformat(TTR("The shader (\"%s\") has been updated to correspond Godot %s.%s version."), visual_shader->get_path(), engine_version["major"], engine_version["minor"]));
-		} else {
-			for (int i = 0; i < components.size(); i++) {
-				if (vs_version[components[i]] != engine_version[components[i]]) {
-					visual_shader->update_engine_version(engine_version);
-					print_line(vformat(TTR("The shader (\"%s\") has been updated to correspond Godot %s.%s version."), visual_shader->get_path(), engine_version["major"], engine_version["minor"]));
-					break;
-				}
-			}
-		}
-#endif
 		visual_shader->set_graph_offset(graph->get_scroll_ofs() / EDSCALE);
 		_set_mode(visual_shader->get_mode());
 	} else {
@@ -4851,7 +4830,7 @@ VisualShaderEditor::VisualShaderEditor() {
 
 	error_label = memnew(Label);
 	error_panel->add_child(error_label);
-	error_label->set_autowrap_mode(Label::AUTOWRAP_WORD_SMART);
+	error_label->set_autowrap_mode(TextServer::AUTOWRAP_WORD_SMART);
 
 	///////////////////////////////////////
 	// POPUP MENU
@@ -5008,7 +4987,7 @@ VisualShaderEditor::VisualShaderEditor() {
 	}
 
 	alert = memnew(AcceptDialog);
-	alert->get_label()->set_autowrap_mode(Label::AUTOWRAP_WORD);
+	alert->get_label()->set_autowrap_mode(TextServer::AUTOWRAP_WORD);
 	alert->get_label()->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_CENTER);
 	alert->get_label()->set_vertical_alignment(VERTICAL_ALIGNMENT_CENTER);
 	alert->get_label()->set_custom_minimum_size(Size2(400, 60) * EDSCALE);
@@ -5665,48 +5644,6 @@ VisualShaderEditor::VisualShaderEditor() {
 
 	property_editor->connect("variant_changed", callable_mp(this, &VisualShaderEditor::_port_edited));
 }
-
-/////////////////
-
-void VisualShaderEditorPlugin::edit(Object *p_object) {
-	visual_shader_editor->edit(Object::cast_to<VisualShader>(p_object));
-}
-
-bool VisualShaderEditorPlugin::handles(Object *p_object) const {
-	return p_object->is_class("VisualShader");
-}
-
-void VisualShaderEditorPlugin::make_visible(bool p_visible) {
-	if (p_visible) {
-		//editor->hide_animation_player_editors();
-		//editor->animation_panel_make_visible(true);
-		button->show();
-		EditorNode::get_singleton()->make_bottom_panel_item_visible(visual_shader_editor);
-		visual_shader_editor->update_nodes();
-		visual_shader_editor->set_process_input(true);
-		//visual_shader_editor->set_process(true);
-	} else {
-		if (visual_shader_editor->is_visible_in_tree()) {
-			EditorNode::get_singleton()->hide_bottom_panel();
-		}
-		button->hide();
-		visual_shader_editor->set_process_input(false);
-		//visual_shader_editor->set_process(false);
-	}
-}
-
-VisualShaderEditorPlugin::VisualShaderEditorPlugin() {
-	visual_shader_editor = memnew(VisualShaderEditor);
-	visual_shader_editor->set_custom_minimum_size(Size2(0, 300) * EDSCALE);
-
-	button = EditorNode::get_singleton()->add_bottom_panel_item(TTR("VisualShader"), visual_shader_editor);
-	button->hide();
-}
-
-VisualShaderEditorPlugin::~VisualShaderEditorPlugin() {
-}
-
-////////////////
 
 class VisualShaderNodePluginInputEditor : public OptionButton {
 	GDCLASS(VisualShaderNodePluginInputEditor, OptionButton);

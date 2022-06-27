@@ -312,7 +312,7 @@ GDScriptCodeGenerator::Address GDScriptCompiler::_parse_expression(CodeGen &code
 					// Class C++ integer constant.
 					if (nc) {
 						bool success = false;
-						int constant = ClassDB::get_integer_constant(nc->get_name(), identifier, &success);
+						int64_t constant = ClassDB::get_integer_constant(nc->get_name(), identifier, &success);
 						if (success) {
 							return codegen.add_constant(constant);
 						}
@@ -1389,6 +1389,44 @@ GDScriptCodeGenerator::Address GDScriptCompiler::_parse_match_pattern(CodeGen &c
 			codegen.generator->pop_temporary();
 			codegen.generator->pop_temporary();
 
+			// Create temporaries outside the loop so they can be reused.
+			GDScriptCodeGenerator::Address element_addr = codegen.add_temporary();
+			GDScriptCodeGenerator::Address element_type_addr = codegen.add_temporary();
+
+			// Evaluate element by element.
+			for (int i = 0; i < p_pattern->array.size(); i++) {
+				if (p_pattern->array[i]->pattern_type == GDScriptParser::PatternNode::PT_REST) {
+					// Don't want to access an extra element of the user array.
+					break;
+				}
+
+				// Use AND here too, as we don't want to be checking elements if previous test failed (which means this might be an invalid get).
+				codegen.generator->write_and_left_operand(result_addr);
+
+				// Add index to constant map.
+				GDScriptCodeGenerator::Address index_addr = codegen.add_constant(i);
+
+				// Get the actual element from the user-sent array.
+				codegen.generator->write_get(element_addr, index_addr, p_value_addr);
+
+				// Also get type of element.
+				Vector<GDScriptCodeGenerator::Address> typeof_args;
+				typeof_args.push_back(element_addr);
+				codegen.generator->write_call_utility(element_type_addr, "typeof", typeof_args);
+
+				// Try the pattern inside the element.
+				result_addr = _parse_match_pattern(codegen, r_error, p_pattern->array[i], element_addr, element_type_addr, result_addr, false, true);
+				if (r_error != OK) {
+					return GDScriptCodeGenerator::Address();
+				}
+
+				codegen.generator->write_and_right_operand(result_addr);
+				codegen.generator->write_end_and(result_addr);
+			}
+			// Remove element temporaries.
+			codegen.generator->pop_temporary();
+			codegen.generator->pop_temporary();
+
 			// If this isn't the first, we need to OR with the previous pattern. If it's nested, we use AND instead.
 			if (p_is_nested) {
 				// Use the previous value as target, since we only need one temporary variable.
@@ -1404,46 +1442,7 @@ GDScriptCodeGenerator::Address GDScriptCompiler::_parse_match_pattern(CodeGen &c
 			}
 			codegen.generator->pop_temporary(); // Remove temp result addr.
 
-			// Create temporaries outside the loop so they can be reused.
-			GDScriptCodeGenerator::Address element_addr = codegen.add_temporary();
-			GDScriptCodeGenerator::Address element_type_addr = codegen.add_temporary();
-			GDScriptCodeGenerator::Address test_addr = p_previous_test;
-
-			// Evaluate element by element.
-			for (int i = 0; i < p_pattern->array.size(); i++) {
-				if (p_pattern->array[i]->pattern_type == GDScriptParser::PatternNode::PT_REST) {
-					// Don't want to access an extra element of the user array.
-					break;
-				}
-
-				// Use AND here too, as we don't want to be checking elements if previous test failed (which means this might be an invalid get).
-				codegen.generator->write_and_left_operand(test_addr);
-
-				// Add index to constant map.
-				GDScriptCodeGenerator::Address index_addr = codegen.add_constant(i);
-
-				// Get the actual element from the user-sent array.
-				codegen.generator->write_get(element_addr, index_addr, p_value_addr);
-
-				// Also get type of element.
-				Vector<GDScriptCodeGenerator::Address> typeof_args;
-				typeof_args.push_back(element_addr);
-				codegen.generator->write_call_utility(element_type_addr, "typeof", typeof_args);
-
-				// Try the pattern inside the element.
-				test_addr = _parse_match_pattern(codegen, r_error, p_pattern->array[i], element_addr, element_type_addr, p_previous_test, false, true);
-				if (r_error != OK) {
-					return GDScriptCodeGenerator::Address();
-				}
-
-				codegen.generator->write_and_right_operand(test_addr);
-				codegen.generator->write_end_and(test_addr);
-			}
-			// Remove element temporaries.
-			codegen.generator->pop_temporary();
-			codegen.generator->pop_temporary();
-
-			return test_addr;
+			return p_previous_test;
 		} break;
 		case GDScriptParser::PatternNode::PT_DICTIONARY: {
 			if (p_is_nested) {
@@ -1488,6 +1487,66 @@ GDScriptCodeGenerator::Address GDScriptCompiler::_parse_match_pattern(CodeGen &c
 			codegen.generator->pop_temporary();
 			codegen.generator->pop_temporary();
 
+			// Create temporaries outside the loop so they can be reused.
+			GDScriptCodeGenerator::Address element_addr = codegen.add_temporary();
+			GDScriptCodeGenerator::Address element_type_addr = codegen.add_temporary();
+
+			// Evaluate element by element.
+			for (int i = 0; i < p_pattern->dictionary.size(); i++) {
+				const GDScriptParser::PatternNode::Pair &element = p_pattern->dictionary[i];
+				if (element.value_pattern && element.value_pattern->pattern_type == GDScriptParser::PatternNode::PT_REST) {
+					// Ignore rest pattern.
+					break;
+				}
+
+				// Use AND here too, as we don't want to be checking elements if previous test failed (which means this might be an invalid get).
+				codegen.generator->write_and_left_operand(result_addr);
+
+				// Get the pattern key.
+				GDScriptCodeGenerator::Address pattern_key_addr = _parse_expression(codegen, r_error, element.key);
+				if (r_error) {
+					return GDScriptCodeGenerator::Address();
+				}
+
+				// Check if pattern key exists in user's dictionary. This will be AND-ed with next result.
+				func_args.clear();
+				func_args.push_back(pattern_key_addr);
+				codegen.generator->write_call(result_addr, p_value_addr, "has", func_args);
+
+				if (element.value_pattern != nullptr) {
+					// Use AND here too, as we don't want to be checking elements if previous test failed (which means this might be an invalid get).
+					codegen.generator->write_and_left_operand(result_addr);
+
+					// Get actual value from user dictionary.
+					codegen.generator->write_get(element_addr, pattern_key_addr, p_value_addr);
+
+					// Also get type of value.
+					func_args.clear();
+					func_args.push_back(element_addr);
+					codegen.generator->write_call_utility(element_type_addr, "typeof", func_args);
+
+					// Try the pattern inside the value.
+					result_addr = _parse_match_pattern(codegen, r_error, element.value_pattern, element_addr, element_type_addr, result_addr, false, true);
+					if (r_error != OK) {
+						return GDScriptCodeGenerator::Address();
+					}
+					codegen.generator->write_and_right_operand(result_addr);
+					codegen.generator->write_end_and(result_addr);
+				}
+
+				codegen.generator->write_and_right_operand(result_addr);
+				codegen.generator->write_end_and(result_addr);
+
+				// Remove pattern key temporary.
+				if (pattern_key_addr.mode == GDScriptCodeGenerator::Address::TEMPORARY) {
+					codegen.generator->pop_temporary();
+				}
+			}
+
+			// Remove element temporaries.
+			codegen.generator->pop_temporary();
+			codegen.generator->pop_temporary();
+
 			// If this isn't the first, we need to OR with the previous pattern. If it's nested, we use AND instead.
 			if (p_is_nested) {
 				// Use the previous value as target, since we only need one temporary variable.
@@ -1503,71 +1562,7 @@ GDScriptCodeGenerator::Address GDScriptCompiler::_parse_match_pattern(CodeGen &c
 			}
 			codegen.generator->pop_temporary(); // Remove temp result addr.
 
-			// Create temporaries outside the loop so they can be reused.
-			temp_type.builtin_type = Variant::BOOL;
-			GDScriptCodeGenerator::Address test_result = codegen.add_temporary(temp_type);
-			GDScriptCodeGenerator::Address element_addr = codegen.add_temporary();
-			GDScriptCodeGenerator::Address element_type_addr = codegen.add_temporary();
-			GDScriptCodeGenerator::Address test_addr = p_previous_test;
-
-			// Evaluate element by element.
-			for (int i = 0; i < p_pattern->dictionary.size(); i++) {
-				const GDScriptParser::PatternNode::Pair &element = p_pattern->dictionary[i];
-				if (element.value_pattern && element.value_pattern->pattern_type == GDScriptParser::PatternNode::PT_REST) {
-					// Ignore rest pattern.
-					break;
-				}
-
-				// Use AND here too, as we don't want to be checking elements if previous test failed (which means this might be an invalid get).
-				codegen.generator->write_and_left_operand(test_addr);
-
-				// Get the pattern key.
-				GDScriptCodeGenerator::Address pattern_key_addr = _parse_expression(codegen, r_error, element.key);
-				if (r_error) {
-					return GDScriptCodeGenerator::Address();
-				}
-
-				// Check if pattern key exists in user's dictionary. This will be AND-ed with next result.
-				func_args.clear();
-				func_args.push_back(pattern_key_addr);
-				codegen.generator->write_call(test_result, p_value_addr, "has", func_args);
-
-				if (element.value_pattern != nullptr) {
-					// Use AND here too, as we don't want to be checking elements if previous test failed (which means this might be an invalid get).
-					codegen.generator->write_and_left_operand(test_result);
-
-					// Get actual value from user dictionary.
-					codegen.generator->write_get(element_addr, pattern_key_addr, p_value_addr);
-
-					// Also get type of value.
-					func_args.clear();
-					func_args.push_back(element_addr);
-					codegen.generator->write_call_utility(element_type_addr, "typeof", func_args);
-
-					// Try the pattern inside the value.
-					test_addr = _parse_match_pattern(codegen, r_error, element.value_pattern, element_addr, element_type_addr, test_addr, false, true);
-					if (r_error != OK) {
-						return GDScriptCodeGenerator::Address();
-					}
-					codegen.generator->write_and_right_operand(test_addr);
-					codegen.generator->write_end_and(test_addr);
-				}
-
-				codegen.generator->write_and_right_operand(test_addr);
-				codegen.generator->write_end_and(test_addr);
-
-				// Remove pattern key temporary.
-				if (pattern_key_addr.mode == GDScriptCodeGenerator::Address::TEMPORARY) {
-					codegen.generator->pop_temporary();
-				}
-			}
-
-			// Remove element temporaries.
-			codegen.generator->pop_temporary();
-			codegen.generator->pop_temporary();
-			codegen.generator->pop_temporary();
-
-			return test_addr;
+			return p_previous_test;
 		} break;
 		case GDScriptParser::PatternNode::PT_REST:
 			// Do nothing.
@@ -1995,18 +1990,18 @@ GDScriptFunction *GDScriptCompiler::_parse_function(Error &r_error, GDScript *p_
 
 	// Parse initializer if applies.
 	bool is_implicit_initializer = !p_for_ready && !p_func && !p_for_lambda;
-	bool is_initializer = p_func && !p_for_lambda && String(p_func->identifier->name) == GDScriptLanguage::get_singleton()->strings._init;
-	bool is_for_ready = p_for_ready || (p_func && !p_for_lambda && String(p_func->identifier->name) == "_ready");
+	bool is_initializer = p_func && !p_for_lambda && p_func->identifier->name == GDScriptLanguage::get_singleton()->strings._init;
+	bool is_implicit_ready = !p_func && p_for_ready;
 
-	if (!p_for_lambda && (is_implicit_initializer || is_for_ready)) {
+	if (!p_for_lambda && (is_implicit_initializer || is_implicit_ready)) {
 		// Initialize class fields.
 		for (int i = 0; i < p_class->members.size(); i++) {
 			if (p_class->members[i].type != GDScriptParser::ClassNode::Member::VARIABLE) {
 				continue;
 			}
 			const GDScriptParser::VariableNode *field = p_class->members[i].variable;
-			if (field->onready != is_for_ready) {
-				// Only initialize in _ready.
+			if (field->onready != is_implicit_ready) {
+				// Only initialize in @implicit_ready.
 				continue;
 			}
 
@@ -2128,6 +2123,8 @@ GDScriptFunction *GDScriptCompiler::_parse_function(Error &r_error, GDScript *p_
 		p_script->initializer = gd_function;
 	} else if (is_implicit_initializer) {
 		p_script->implicit_initializer = gd_function;
+	} else if (is_implicit_ready) {
+		p_script->implicit_ready = gd_function;
 	}
 
 	if (p_func) {
@@ -2145,7 +2142,7 @@ GDScriptFunction *GDScriptCompiler::_parse_function(Error &r_error, GDScript *p_
 #endif
 	}
 
-	if (!p_for_lambda) {
+	if (!is_implicit_initializer && !is_implicit_ready && !p_for_lambda) {
 		p_script->member_functions[func_name] = gd_function;
 	}
 
@@ -2213,11 +2210,19 @@ Error GDScriptCompiler::_parse_class_level(GDScript *p_script, const GDScriptPar
 	for (const KeyValue<StringName, GDScriptFunction *> &E : p_script->member_functions) {
 		memdelete(E.value);
 	}
+	if (p_script->implicit_initializer) {
+		memdelete(p_script->implicit_initializer);
+	}
+	if (p_script->implicit_ready) {
+		memdelete(p_script->implicit_ready);
+	}
 	p_script->member_functions.clear();
 	p_script->member_indices.clear();
 	p_script->member_info.clear();
 	p_script->_signals.clear();
 	p_script->initializer = nullptr;
+	p_script->implicit_initializer = nullptr;
+	p_script->implicit_ready = nullptr;
 
 	p_script->tool = parser->is_tool();
 	p_script->name = p_class->identifier ? p_class->identifier->name : "";
@@ -2461,15 +2466,10 @@ Error GDScriptCompiler::_parse_class_level(GDScript *p_script, const GDScriptPar
 Error GDScriptCompiler::_parse_class_blocks(GDScript *p_script, const GDScriptParser::ClassNode *p_class, bool p_keep_state) {
 	//parse methods
 
-	bool has_ready = false;
-
 	for (int i = 0; i < p_class->members.size(); i++) {
 		const GDScriptParser::ClassNode::Member &member = p_class->members[i];
 		if (member.type == member.FUNCTION) {
 			const GDScriptParser::FunctionNode *function = member.function;
-			if (!has_ready && function->identifier->name == "_ready") {
-				has_ready = true;
-			}
 			Error err = OK;
 			_parse_function(err, p_script, p_class, function);
 			if (err) {
@@ -2503,8 +2503,8 @@ Error GDScriptCompiler::_parse_class_blocks(GDScript *p_script, const GDScriptPa
 		}
 	}
 
-	if (!has_ready && p_class->onready_used) {
-		//create a _ready constructor
+	if (p_class->onready_used) {
+		// Create an implicit_ready constructor.
 		Error err = OK;
 		_parse_function(err, p_script, p_class, nullptr, true);
 		if (err) {

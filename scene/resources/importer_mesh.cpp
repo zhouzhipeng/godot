@@ -331,6 +331,7 @@ void ImporterMesh::generate_lods(float p_normal_merge_angle, float p_normal_spli
 
 					bool is_uvs_close = (!uvs_ptr || uvs_ptr[j].distance_squared_to(uvs_ptr[idx.second]) < CMP_EPSILON2);
 					bool is_uv2s_close = (!uv2s_ptr || uv2s_ptr[j].distance_squared_to(uv2s_ptr[idx.second]) < CMP_EPSILON2);
+					ERR_FAIL_INDEX(idx.second, normals.size());
 					bool is_normals_close = normals[idx.second].dot(n) > normal_merge_threshold;
 					if (is_uvs_close && is_uv2s_close && is_normals_close) {
 						vertex_remap.push_back(idx.first);
@@ -1046,6 +1047,10 @@ Error ImporterMesh::lightmap_unwrap_cached(const Transform3D &p_base_transform, 
 
 		PackedVector3Array rnormals = arrays[Mesh::ARRAY_NORMAL];
 
+		if (!rnormals.size()) {
+			continue;
+		}
+
 		int vertex_ofs = vertices.size() / 3;
 
 		vertices.resize((vertex_ofs + vc) * 3);
@@ -1086,6 +1091,9 @@ Error ImporterMesh::lightmap_unwrap_cached(const Transform3D &p_base_transform, 
 
 		} else {
 			for (int j = 0; j < ic / 3; j++) {
+				ERR_FAIL_INDEX_V(rindices[j * 3 + 0], rvertices.size(), ERR_INVALID_DATA);
+				ERR_FAIL_INDEX_V(rindices[j * 3 + 1], rvertices.size(), ERR_INVALID_DATA);
+				ERR_FAIL_INDEX_V(rindices[j * 3 + 2], rvertices.size(), ERR_INVALID_DATA);
 				Vector3 p0 = transform.xform(rvertices[rindices[j * 3 + 0]]);
 				Vector3 p1 = transform.xform(rvertices[rindices[j * 3 + 1]]);
 				Vector3 p2 = transform.xform(rvertices[rindices[j * 3 + 2]]);
@@ -1185,7 +1193,7 @@ Error ImporterMesh::lightmap_unwrap_cached(const Transform3D &p_base_transform, 
 	for (unsigned int i = 0; i < surfaces_tools.size(); i++) {
 		surfaces_tools[i]->index();
 		Array arrays = surfaces_tools[i]->commit_to_arrays();
-		add_surface(surfaces_tools[i]->get_primitive(), arrays, Array(), Dictionary(), surfaces_tools[i]->get_material(), surfaces_tools[i]->get_meta("name"));
+		add_surface(surfaces_tools[i]->get_primitive_type(), arrays, Array(), Dictionary(), surfaces_tools[i]->get_material(), surfaces_tools[i]->get_meta("name"));
 	}
 
 	set_lightmap_size_hint(Size2(size_x, size_y));
@@ -1238,6 +1246,7 @@ void ImporterMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_surface_name", "surface_idx", "name"), &ImporterMesh::set_surface_name);
 	ClassDB::bind_method(D_METHOD("set_surface_material", "surface_idx", "material"), &ImporterMesh::set_surface_material);
 
+	ClassDB::bind_method(D_METHOD("generate_lods", "normal_merge_angle", "normal_split_angle"), &ImporterMesh::generate_lods);
 	ClassDB::bind_method(D_METHOD("get_mesh", "base_mesh"), &ImporterMesh::get_mesh, DEFVAL(Ref<ArrayMesh>()));
 	ClassDB::bind_method(D_METHOD("clear"), &ImporterMesh::clear);
 

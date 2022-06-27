@@ -62,7 +62,7 @@ GDScriptNativeClass::GDScriptNativeClass(const StringName &p_name) {
 
 bool GDScriptNativeClass::_get(const StringName &p_name, Variant &r_ret) const {
 	bool ok;
-	int v = ClassDB::get_integer_constant(name, p_name, &ok);
+	int64_t v = ClassDB::get_integer_constant(name, p_name, &ok);
 
 	if (ok) {
 		r_ret = v;
@@ -128,6 +128,7 @@ void GDScript::_super_implicit_constructor(GDScript *p_script, GDScriptInstance 
 			return;
 		}
 	}
+	ERR_FAIL_NULL(p_script->implicit_initializer);
 	p_script->implicit_initializer->call(p_instance, nullptr, 0, r_error);
 }
 
@@ -1253,6 +1254,14 @@ GDScript::~GDScript() {
 		memdelete(E.value);
 	}
 
+	if (implicit_initializer) {
+		memdelete(implicit_initializer);
+	}
+
+	if (implicit_ready) {
+		memdelete(implicit_ready);
+	}
+
 	if (GDScriptCache::singleton) { // Cache may have been already destroyed at engine shutdown.
 		GDScriptCache::remove_script(get_path());
 	}
@@ -1475,6 +1484,9 @@ void GDScriptInstance::get_property_list(List<PropertyInfo> *p_properties) const
 					if (d.has("usage")) {
 						pinfo.usage = d["usage"];
 					}
+					if (d.has("class_name")) {
+						pinfo.class_name = d["class_name"];
+					}
 
 					props.push_back(pinfo);
 				}
@@ -1539,6 +1551,18 @@ bool GDScriptInstance::has_method(const StringName &p_method) const {
 
 Variant GDScriptInstance::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
 	GDScript *sptr = script.ptr();
+	if (unlikely(p_method == SNAME("_ready"))) {
+		// Call implicit ready first, including for the super classes.
+		while (sptr) {
+			if (sptr->implicit_ready) {
+				sptr->implicit_ready->call(this, nullptr, 0, r_error);
+			}
+			sptr = sptr->_base;
+		}
+
+		// Reset this back for the regular call.
+		sptr = script.ptr();
+	}
 	while (sptr) {
 		HashMap<StringName, GDScriptFunction *>::Iterator E = sptr->member_functions.find(p_method);
 		if (E) {

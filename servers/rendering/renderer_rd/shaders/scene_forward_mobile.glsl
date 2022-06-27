@@ -114,9 +114,9 @@ invariant gl_Position;
 
 #GLOBALS
 
-void main() {
-	SceneData scene_data = scene_data_block.data;
+#define scene_data scene_data_block.data
 
+void main() {
 	vec4 instance_custom = vec4(0.0);
 #if defined(COLOR_USED)
 	color_interp = color_attrib;
@@ -576,17 +576,22 @@ vec4 fog_process(vec3 vertex) {
 
 #endif //!MODE_RENDER DEPTH
 
+#define scene_data scene_data_block.data
+
 void main() {
 #ifdef MODE_DUAL_PARABOLOID
 
 	if (dp_clip > 0.0)
 		discard;
 #endif
-	SceneData scene_data = scene_data_block.data;
 
 	//lay out everything, whatever is unused is optimized away anyway
 	vec3 vertex = vertex_interp;
+#ifdef USE_MULTIVIEW
+	vec3 view = -normalize(vertex_interp - scene_data.eye_offset[ViewIndex].xyz);
+#else
 	vec3 view = -normalize(vertex_interp);
+#endif
 	vec3 albedo = vec3(1.0);
 	vec3 backlight = vec3(0.0);
 	vec4 transmittance_color = vec4(0.0);
@@ -1051,7 +1056,7 @@ void main() {
 #else
 			vec3 bent_normal = normal;
 #endif
-			reflection_process(reflection_index, vertex, bent_normal, roughness, ambient_light, specular_light, ambient_accum, reflection_accum);
+			reflection_process(reflection_index, view, vertex, bent_normal, roughness, ambient_light, specular_light, ambient_accum, reflection_accum);
 		}
 
 		if (reflection_accum.a > 0.0) {

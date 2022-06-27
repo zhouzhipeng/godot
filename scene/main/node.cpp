@@ -300,7 +300,7 @@ void Node::_propagate_exit_tree() {
 	if (data.parent) {
 		Variant c = this;
 		const Variant *cptr = &c;
-		data.parent->emit_signalp(SNAME("child_exited_tree"), &cptr, 1);
+		data.parent->emit_signalp(SNAME("child_exiting_tree"), &cptr, 1);
 	}
 
 	// exit groups
@@ -418,6 +418,9 @@ void Node::remove_child_notify(Node *p_child) {
 
 void Node::move_child_notify(Node *p_child) {
 	// to be used when not wanted
+}
+
+void Node::owner_changed_notify() {
 }
 
 void Node::set_physics_process(bool p_process) {
@@ -1544,6 +1547,8 @@ void Node::_set_owner_nocheck(Node *p_owner) {
 	data.owner = p_owner;
 	data.owner->data.owned.push_back(this);
 	data.OW = data.owner->data.owned.back();
+
+	owner_changed_notify();
 }
 
 void Node::_release_unique_name_in_owner() {
@@ -2973,7 +2978,7 @@ void Node::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("tree_exiting"));
 	ADD_SIGNAL(MethodInfo("tree_exited"));
 	ADD_SIGNAL(MethodInfo("child_entered_tree", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "Node")));
-	ADD_SIGNAL(MethodInfo("child_exited_tree", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "Node")));
+	ADD_SIGNAL(MethodInfo("child_exiting_tree", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "Node")));
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "set_name", "get_name");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "unique_name_in_owner", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NO_EDITOR), "set_unique_name_in_owner", "is_unique_name_in_owner");

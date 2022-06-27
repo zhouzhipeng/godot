@@ -65,6 +65,8 @@
 #include "servers/audio_server.h"
 #include "servers/camera_server.h"
 #include "servers/display_server.h"
+#include "servers/movie_writer/movie_writer.h"
+#include "servers/movie_writer/movie_writer_mjpeg.h"
 #include "servers/navigation_server_2d.h"
 #include "servers/navigation_server_3d.h"
 #include "servers/physics_server_2d.h"
@@ -87,6 +89,7 @@
 #include "editor/editor_settings.h"
 #include "editor/editor_translation.h"
 #include "editor/progress_dialog.h"
+#include "editor/project_converter_3_to_4.h"
 #include "editor/project_manager.h"
 #ifndef NO_EDITOR_SPLASH
 #include "main/splash_editor.gen.h"
@@ -177,6 +180,9 @@ static bool debug_navigation = false;
 static int frame_delay = 0;
 static bool disable_render_loop = false;
 static int fixed_fps = -1;
+static String write_movie_path;
+static MovieWriter *movie_writer = nullptr;
+static bool disable_vsync = false;
 static bool print_fps = false;
 #ifdef TOOLS_ENABLED
 static bool dump_extension_api = false;
@@ -324,6 +330,8 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  --text-driver <driver>                       Text driver (Fonts, BiDi, shaping)\n");
 	OS::get_singleton()->print("  --tablet-driver <driver>                     Pen tablet input driver.\n");
 	OS::get_singleton()->print("  --headless                                   Enable headless mode (--display-driver headless --audio-driver Dummy). Useful for servers and with --script.\n");
+	OS::get_singleton()->print("  --write-movie <file>                         Run the engine in a way that a movie is written (by default .avi MJPEG). Fixed FPS is forced when enabled, but can be used to change movie FPS. Disabling vsync can speed up movie writing but makes interaction more difficult.\n");
+	OS::get_singleton()->print("  --disable-vsync                              Force disabling of vsync. Run the engine in a way that a movie is written (by default .avi MJPEG). Fixed FPS is forced when enabled, but can be used to change movie FPS.\n");
 
 	OS::get_singleton()->print("\n");
 
@@ -368,6 +376,8 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("                                               <path> should be absolute or relative to the project directory, and include the filename for the binary (e.g. 'builds/game.exe'). The target directory should exist.\n");
 	OS::get_singleton()->print("  --export-debug <preset> <path>               Same as --export, but using the debug template.\n");
 	OS::get_singleton()->print("  --export-pack <preset> <path>                Same as --export, but only export the game pack for the given preset. The <path> extension determines whether it will be in PCK or ZIP format.\n");
+	OS::get_singleton()->print("  --convert-3to4                               Converts project from Godot 3.x to Godot 4.x.\n");
+	OS::get_singleton()->print("  --validate-conversion-3to4                   Shows what elements will be renamed when converting project from Godot 3.x to Godot 4.x.\n");
 	OS::get_singleton()->print("  --doctool [<path>]                           Dump the engine API reference to the given <path> (defaults to current dir) in XML format, merging if existing files are found.\n");
 	OS::get_singleton()->print("  --no-docbase                                 Disallow dumping the base types (used with --doctool).\n");
 	OS::get_singleton()->print("  --build-solutions                            Build the scripting solutions (e.g. for C# projects). Implies --editor and requires a valid project to edit.\n");
@@ -600,7 +610,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	GLOBAL_DEF_RST("application/run/flush_stdout_on_print.debug", true);
 
 	GLOBAL_DEF("debug/settings/crash_handler/message",
-			String("Please include this when reporting the bug on https://github.com/godotengine/godot/issues"));
+			String("Please include this when reporting the bug to the project developer."));
+	GLOBAL_DEF("debug/settings/crash_handler/message.editor",
+			String("Please include this when reporting the bug on: https://github.com/godotengine/godot/issues"));
 
 	MAIN_PRINT("Main: Parse CMDLine");
 
@@ -996,6 +1008,14 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			editor = true;
 			cmdline_tool = true;
 			main_args.push_back(I->get());
+		} else if (I->get() == "--convert-3to4") {
+			// Actually handling is done in start().
+			cmdline_tool = true;
+			main_args.push_back(I->get());
+		} else if (I->get() == "--validate-conversion-3to4") {
+			// Actually handling is done in start().
+			cmdline_tool = true;
+			main_args.push_back(I->get());
 		} else if (I->get() == "--doctool") {
 			// Actually handling is done in start().
 			cmdline_tool = true;
@@ -1123,6 +1143,20 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 				OS::get_singleton()->print("Missing fixed-fps argument, aborting.\n");
 				goto error;
 			}
+		} else if (I->get() == "--write-movie") {
+			if (I->next()) {
+				write_movie_path = I->next()->get();
+				N = I->next()->next();
+				if (fixed_fps == -1) {
+					fixed_fps = 60;
+				}
+				OS::get_singleton()->_writing_movie = true;
+			} else {
+				OS::get_singleton()->print("Missing write-movie argument, aborting.\n");
+				goto error;
+			}
+		} else if (I->get() == "--disable-vsync") {
+			disable_vsync = true;
 		} else if (I->get() == "--print-fps") {
 			print_fps = true;
 		} else if (I->get() == "--profile-gpu") {
@@ -1449,7 +1483,13 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	if (audio_driver_idx < 0) {
-		audio_driver_idx = 0;
+		audio_driver_idx = 0; // 0 Is always available as the dummy driver (no sound)
+	}
+
+	if (write_movie_path != String()) {
+		// Always use dummy driver for audio driver (which is last), also in no threaded mode.
+		audio_driver_idx = AudioDriverManager::get_driver_count() - 1;
+		AudioDriverDummy::get_dummy_singleton()->set_use_threads(false);
 	}
 
 	{
@@ -1457,6 +1497,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 	{
 		window_vsync_mode = DisplayServer::VSyncMode(int(GLOBAL_DEF("display/window/vsync/vsync_mode", DisplayServer::VSyncMode::VSYNC_ENABLED)));
+		if (disable_vsync) {
+			window_vsync_mode = DisplayServer::VSyncMode::VSYNC_DISABLED;
+		}
 	}
 	Engine::get_singleton()->set_physics_ticks_per_second(GLOBAL_DEF_BASIC("physics/common/physics_ticks_per_second", 60));
 	ProjectSettings::get_singleton()->set_custom_property_info("physics/common/physics_ticks_per_second",
@@ -1496,7 +1539,11 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 					"0,33200,1,or_greater")); // No negative numbers
 
 	GLOBAL_DEF("display/window/ios/hide_home_indicator", true);
-	GLOBAL_DEF("input_devices/pointing/ios/touch_delay", 0.150);
+	GLOBAL_DEF("input_devices/pointing/ios/touch_delay", 0.15);
+	ProjectSettings::get_singleton()->set_custom_property_info("input_devices/pointing/ios/touch_delay",
+			PropertyInfo(Variant::FLOAT,
+					"input_devices/pointing/ios/touch_delay",
+					PROPERTY_HINT_RANGE, "0,1,0.001"));
 
 	// XR project settings.
 	GLOBAL_DEF_RST_BASIC("xr/openxr/enabled", false);
@@ -1536,6 +1583,7 @@ error:
 	display_driver = "";
 	audio_driver = "";
 	tablet_driver = "";
+	write_movie_path = "";
 	project_path = "";
 
 	args.clear();
@@ -1706,6 +1754,14 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	if (profile_gpu || (!editor && bool(GLOBAL_GET("debug/settings/stdout/print_gpu_profile")))) {
 		rendering_server->set_print_gpu_profile(true);
+	}
+
+	if (write_movie_path != String()) {
+		movie_writer = MovieWriter::find_writer_for_file(write_movie_path);
+		if (movie_writer == nullptr) {
+			ERR_PRINT("Can't find movie writer for file type, aborting: " + write_movie_path);
+			write_movie_path = String();
+		}
 	}
 
 #ifdef UNIX_ENABLED
@@ -2035,6 +2091,8 @@ bool Main::start() {
 	String _export_preset;
 	bool export_debug = false;
 	bool export_pack_only = false;
+	bool converting_project = false;
+	bool validating_converting_project = false;
 #endif
 
 	main_timer_sync.init(OS::get_singleton()->get_ticks_usec());
@@ -2050,6 +2108,10 @@ bool Main::start() {
 #ifdef TOOLS_ENABLED
 		} else if (args[i] == "--no-docbase") {
 			doc_base = false;
+		} else if (args[i] == "--convert-3to4") {
+			converting_project = true;
+		} else if (args[i] == "--validate-conversion-3to4") {
+			validating_converting_project = true;
 		} else if (args[i] == "-e" || args[i] == "--editor") {
 			editor = true;
 		} else if (args[i] == "-p" || args[i] == "--project-manager") {
@@ -2203,6 +2265,18 @@ bool Main::start() {
 		NativeExtensionAPIDump::generate_extension_json_file("extension_api.json");
 		return false;
 	}
+
+	if (converting_project) {
+		int exit_code = ProjectConverter3To4().convert();
+		OS::get_singleton()->set_exit_code(exit_code);
+		return false;
+	}
+	if (validating_converting_project) {
+		int exit_code = ProjectConverter3To4().validate_conversion();
+		OS::get_singleton()->set_exit_code(exit_code);
+		return false;
+	}
+
 #endif
 
 	if (script.is_empty() && game_path.is_empty() && String(GLOBAL_GET("application/run/main_scene")) != "") {
@@ -2615,6 +2689,9 @@ bool Main::start() {
 
 	OS::get_singleton()->set_main_loop(main_loop);
 
+	if (movie_writer) {
+		movie_writer->begin(DisplayServer::get_singleton()->window_get_size(), fixed_fps, write_movie_path);
+	}
 	return true;
 }
 
@@ -2801,6 +2878,13 @@ bool Main::iteration() {
 		Input::get_singleton()->flush_buffered_events();
 	}
 
+	if (movie_writer) {
+		RID main_vp_rid = RenderingServer::get_singleton()->viewport_find_from_screen_attachment(DisplayServer::MAIN_WINDOW_ID);
+		RID main_vp_texture = RenderingServer::get_singleton()->viewport_get_texture(main_vp_rid);
+		Ref<Image> vp_tex = RenderingServer::get_singleton()->texture_2d_get(main_vp_texture);
+		movie_writer->add_frame(vp_tex);
+	}
+
 	if (fixed_fps != -1) {
 		return exit;
 	}
@@ -2838,6 +2922,10 @@ void Main::force_redraw() {
 void Main::cleanup(bool p_force) {
 	if (!p_force) {
 		ERR_FAIL_COND(!_start_success);
+	}
+
+	if (movie_writer) {
+		movie_writer->end();
 	}
 
 	ResourceLoader::remove_custom_loaders();

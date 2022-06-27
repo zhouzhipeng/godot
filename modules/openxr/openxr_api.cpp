@@ -48,7 +48,9 @@
 #include "extensions/openxr_vulkan_extension.h"
 #endif
 
-#include "openxr_interface.h"
+#include "extensions/openxr_htc_vive_tracker_extension.h"
+
+#include "modules/openxr/openxr_interface.h"
 
 OpenXRAPI *OpenXRAPI::singleton = nullptr;
 
@@ -1102,7 +1104,7 @@ Size2 OpenXRAPI::get_recommended_target_size() {
 	return target_size;
 }
 
-XRPose::TrackingConfidence OpenXRAPI::get_head_center(Transform3D &r_transform, Vector3 &r_linear_velocity, const Vector3 &r_angular_velocity) {
+XRPose::TrackingConfidence OpenXRAPI::get_head_center(Transform3D &r_transform, Vector3 &r_linear_velocity, Vector3 &r_angular_velocity) {
 	XrResult result;
 
 	ERR_FAIL_COND_V(!running, XRPose::XR_TRACKING_CONFIDENCE_NONE);
@@ -1644,6 +1646,9 @@ OpenXRAPI::OpenXRAPI() {
 	// our android wrapper will initialize our android loader at this point
 	register_extension_wrapper(memnew(OpenXRAndroidExtension(this)));
 #endif
+
+	// register our other extensions
+	register_extension_wrapper(memnew(OpenXRHTCViveTrackerExtension(this)));
 }
 
 OpenXRAPI::~OpenXRAPI() {
@@ -1730,7 +1735,7 @@ XRPose::TrackingConfidence OpenXRAPI::transform_from_location(const XrHandJointL
 	return _transform_from_location(p_location, r_transform);
 }
 
-void OpenXRAPI::parse_velocities(const XrSpaceVelocity &p_velocity, Vector3 &r_linear_velocity, Vector3 r_angular_velocity) {
+void OpenXRAPI::parse_velocities(const XrSpaceVelocity &p_velocity, Vector3 &r_linear_velocity, Vector3 &r_angular_velocity) {
 	if (p_velocity.velocityFlags & XR_SPACE_VELOCITY_LINEAR_VALID_BIT) {
 		XrVector3f linear_velocity = p_velocity.linearVelocity;
 		r_linear_velocity = Vector3(linear_velocity.x, linear_velocity.y, linear_velocity.z);
@@ -2303,7 +2308,7 @@ Vector2 OpenXRAPI::get_action_vector2(RID p_action, RID p_tracker) {
 	return result_state.isActive ? Vector2(result_state.currentState.x, result_state.currentState.y) : Vector2();
 }
 
-XRPose::TrackingConfidence OpenXRAPI::get_action_pose(RID p_action, RID p_tracker, Transform3D &r_transform, Vector3 &r_linear_velocity, const Vector3 &r_angular_velocity) {
+XRPose::TrackingConfidence OpenXRAPI::get_action_pose(RID p_action, RID p_tracker, Transform3D &r_transform, Vector3 &r_linear_velocity, Vector3 &r_angular_velocity) {
 	ERR_FAIL_COND_V(session == XR_NULL_HANDLE, XRPose::XR_TRACKING_CONFIDENCE_NONE);
 	Action *action = action_owner.get_or_null(p_action);
 	ERR_FAIL_NULL_V(action, XRPose::XR_TRACKING_CONFIDENCE_NONE);

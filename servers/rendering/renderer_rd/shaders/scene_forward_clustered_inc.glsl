@@ -180,6 +180,7 @@ struct SceneData {
 	// only used for multiview
 	mat4 projection_matrix_view[MAX_VIEWS];
 	mat4 inv_projection_matrix_view[MAX_VIEWS];
+	vec4 eye_offset[MAX_VIEWS];
 
 	vec2 viewport_size;
 	vec2 screen_pixel_size;
@@ -250,7 +251,7 @@ struct SceneData {
 
 	bool pancake_shadows;
 	vec2 taa_jitter;
-	uvec2 pad;
+	uvec2 pad2;
 };
 
 layout(set = 1, binding = 0, std140) uniform SceneDataBlock {
@@ -316,10 +317,16 @@ layout(r32ui, set = 1, binding = 12) uniform restrict uimage3D geom_facing_grid;
 layout(set = 1, binding = 9) uniform texture2D depth_buffer;
 layout(set = 1, binding = 10) uniform texture2D color_buffer;
 
+#ifdef USE_MULTIVIEW
+layout(set = 1, binding = 11) uniform texture2DArray normal_roughness_buffer;
+layout(set = 1, binding = 13) uniform texture2DArray ambient_buffer;
+layout(set = 1, binding = 14) uniform texture2DArray reflection_buffer;
+#else // USE_MULTIVIEW
 layout(set = 1, binding = 11) uniform texture2D normal_roughness_buffer;
-layout(set = 1, binding = 12) uniform texture2D ao_buffer;
 layout(set = 1, binding = 13) uniform texture2D ambient_buffer;
 layout(set = 1, binding = 14) uniform texture2D reflection_buffer;
+#endif
+layout(set = 1, binding = 12) uniform texture2D ao_buffer;
 layout(set = 1, binding = 15) uniform texture2DArray sdfgi_lightprobe_texture;
 layout(set = 1, binding = 16) uniform texture3D sdfgi_occlusion_cascades;
 

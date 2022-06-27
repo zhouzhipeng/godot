@@ -1289,7 +1289,7 @@ void CanvasItemEditor::_zoom_callback(Vector2 p_scroll_vec, Vector2 p_origin, bo
 	zoom_widget->set_zoom_by_increments(-scroll_sign, p_alt);
 	if (!Math::is_equal_approx(ABS(p_scroll_vec.y), (real_t)1.0)) {
 		// Handle high-precision (analog) scrolling.
-		zoom_widget->set_zoom(zoom * ((zoom_widget->get_zoom() / zoom - 1.f) * p_scroll_vec.y + 1.f));
+		zoom_widget->set_zoom(zoom * ((zoom_widget->get_zoom() / zoom - 1.f) * ABS(p_scroll_vec.y) + 1.f));
 	}
 	_zoom_on_position(zoom_widget->get_zoom(), p_origin);
 }
@@ -5455,7 +5455,7 @@ void CanvasItemEditorViewport::_create_nodes(Node *parent, Node *child, String &
 	}
 	child->set_name(name);
 
-	Ref<Texture2D> texture = Ref<Texture2D>(Object::cast_to<Texture2D>(ResourceCache::get(path)));
+	Ref<Texture2D> texture = ResourceCache::get_ref(path);
 
 	if (parent) {
 		editor_data->get_undo_redo().add_do_method(parent, "add_child", child, true);

@@ -2434,8 +2434,8 @@ void SceneTreeDock::_new_scene_from(String p_file) {
 	Node *copy = base->duplicate_from_editor(duplimap);
 
 	if (copy) {
-		for (int i = 0; i < copy->get_child_count(); i++) {
-			_set_node_owner_recursive(copy->get_child(i), copy);
+		for (int i = 0; i < copy->get_child_count(false); i++) {
+			_set_node_owner_recursive(copy->get_child(i, false), copy);
 		}
 
 		Ref<PackedScene> sdata = memnew(PackedScene);
@@ -2472,8 +2472,8 @@ void SceneTreeDock::_set_node_owner_recursive(Node *p_node, Node *p_owner) {
 		p_node->set_owner(p_owner);
 	}
 
-	for (int i = 0; i < p_node->get_child_count(); i++) {
-		_set_node_owner_recursive(p_node->get_child(i), p_owner);
+	for (int i = 0; i < p_node->get_child_count(false); i++) {
+		_set_node_owner_recursive(p_node->get_child(i, false), p_owner);
 	}
 }
 
@@ -2671,7 +2671,7 @@ void SceneTreeDock::_add_children_to_popup(Object *p_obj, int p_depth) {
 		}
 		int index = menu_subresources->get_item_count();
 		menu_subresources->add_icon_item(icon, E.name.capitalize(), EDIT_SUBRESOURCE_BASE + subresources.size());
-		menu_subresources->set_item_h_offset(index, p_depth * 10 * EDSCALE);
+		menu_subresources->set_item_horizontal_offset(index, p_depth * 10 * EDSCALE);
 		subresources.push_back(obj->get_instance_id());
 
 		_add_children_to_popup(obj, p_depth + 1);
