@@ -38,6 +38,8 @@
 #include "rasterizer_scene_gles3.h"
 #include "servers/rendering/shader_language.h"
 
+/* MISC */
+
 void RasterizerStorageGLES3::base_update_dependency(RID p_base, DependencyTracker *p_instance) {
 	if (GLES3::MeshStorage::get_singleton()->owns_mesh(p_base)) {
 		GLES3::Mesh *mesh = GLES3::MeshStorage::get_singleton()->get_mesh(p_base);
@@ -54,104 +56,27 @@ void RasterizerStorageGLES3::base_update_dependency(RID p_base, DependencyTracke
 	}
 }
 
-/* VOXEL GI API */
+Vector<uint8_t> RasterizerStorageGLES3::buffer_get_data(GLenum p_target, GLuint p_buffer, uint32_t p_buffer_size) {
+	Vector<uint8_t> ret;
+	ret.resize(p_buffer_size);
+	glBindBuffer(p_target, p_buffer);
 
-RID RasterizerStorageGLES3::voxel_gi_allocate() {
-	return RID();
-}
-
-void RasterizerStorageGLES3::voxel_gi_initialize(RID p_rid) {
-}
-
-void RasterizerStorageGLES3::voxel_gi_allocate_data(RID p_voxel_gi, const Transform3D &p_to_cell_xform, const AABB &p_aabb, const Vector3i &p_octree_size, const Vector<uint8_t> &p_octree_cells, const Vector<uint8_t> &p_data_cells, const Vector<uint8_t> &p_distance_field, const Vector<int> &p_level_counts) {
-}
-
-AABB RasterizerStorageGLES3::voxel_gi_get_bounds(RID p_voxel_gi) const {
-	return AABB();
-}
-
-Vector3i RasterizerStorageGLES3::voxel_gi_get_octree_size(RID p_voxel_gi) const {
-	return Vector3i();
-}
-
-Vector<uint8_t> RasterizerStorageGLES3::voxel_gi_get_octree_cells(RID p_voxel_gi) const {
-	return Vector<uint8_t>();
-}
-
-Vector<uint8_t> RasterizerStorageGLES3::voxel_gi_get_data_cells(RID p_voxel_gi) const {
-	return Vector<uint8_t>();
-}
-
-Vector<uint8_t> RasterizerStorageGLES3::voxel_gi_get_distance_field(RID p_voxel_gi) const {
-	return Vector<uint8_t>();
-}
-
-Vector<int> RasterizerStorageGLES3::voxel_gi_get_level_counts(RID p_voxel_gi) const {
-	return Vector<int>();
-}
-
-Transform3D RasterizerStorageGLES3::voxel_gi_get_to_cell_xform(RID p_voxel_gi) const {
-	return Transform3D();
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_dynamic_range(RID p_voxel_gi, float p_range) {
-}
-
-float RasterizerStorageGLES3::voxel_gi_get_dynamic_range(RID p_voxel_gi) const {
-	return 0;
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_propagation(RID p_voxel_gi, float p_range) {
-}
-
-float RasterizerStorageGLES3::voxel_gi_get_propagation(RID p_voxel_gi) const {
-	return 0;
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_energy(RID p_voxel_gi, float p_range) {
-}
-
-float RasterizerStorageGLES3::voxel_gi_get_energy(RID p_voxel_gi) const {
-	return 0.0;
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_bias(RID p_voxel_gi, float p_range) {
-}
-
-float RasterizerStorageGLES3::voxel_gi_get_bias(RID p_voxel_gi) const {
-	return 0.0;
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_normal_bias(RID p_voxel_gi, float p_range) {
-}
-
-float RasterizerStorageGLES3::voxel_gi_get_normal_bias(RID p_voxel_gi) const {
-	return 0.0;
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_interior(RID p_voxel_gi, bool p_enable) {
-}
-
-bool RasterizerStorageGLES3::voxel_gi_is_interior(RID p_voxel_gi) const {
-	return false;
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_use_two_bounces(RID p_voxel_gi, bool p_enable) {
-}
-
-bool RasterizerStorageGLES3::voxel_gi_is_using_two_bounces(RID p_voxel_gi) const {
-	return false;
-}
-
-void RasterizerStorageGLES3::voxel_gi_set_anisotropy_strength(RID p_voxel_gi, float p_strength) {
-}
-
-float RasterizerStorageGLES3::voxel_gi_get_anisotropy_strength(RID p_voxel_gi) const {
-	return 0;
-}
-
-uint32_t RasterizerStorageGLES3::voxel_gi_get_version(RID p_voxel_gi) {
-	return 0;
+#if defined(__EMSCRIPTEN__)
+	{
+		uint8_t *w = ret.ptrw();
+		glGetBufferSubData(p_target, 0, p_buffer_size, w);
+	}
+#else
+	void *data = glMapBufferRange(p_target, 0, p_buffer_size, GL_MAP_READ_BIT);
+	ERR_FAIL_NULL_V(data, Vector<uint8_t>());
+	{
+		uint8_t *w = ret.ptrw();
+		memcpy(w, data, p_buffer_size);
+	}
+	glUnmapBuffer(p_target);
+#endif
+	glBindBuffer(p_target, 0);
+	return ret;
 }
 
 /* OCCLUDER */

@@ -551,7 +551,6 @@ class Thread : public RefCounted {
 
 protected:
 	Variant ret;
-	Variant userdata;
 	SafeFlag running;
 	Callable target_callable;
 	::Thread thread;
@@ -566,7 +565,7 @@ public:
 		PRIORITY_MAX
 	};
 
-	Error start(const Callable &p_callable, const Variant &p_userdata = Variant(), Priority p_priority = PRIORITY_NORMAL);
+	Error start(const Callable &p_callable, Priority p_priority = PRIORITY_NORMAL);
 	String get_id() const;
 	bool is_started() const;
 	bool is_alive() const;
@@ -604,7 +603,7 @@ public:
 
 	PackedStringArray get_integer_constant_list(const StringName &p_class, bool p_no_inheritance = false) const;
 	bool has_integer_constant(const StringName &p_class, const StringName &p_name) const;
-	int get_integer_constant(const StringName &p_class, const StringName &p_name) const;
+	int64_t get_integer_constant(const StringName &p_class, const StringName &p_name) const;
 
 	bool has_enum(const StringName &p_class, const StringName &p_name, bool p_no_inheritance = false) const;
 	PackedStringArray get_enum_list(const StringName &p_class, bool p_no_inheritance = false) const;

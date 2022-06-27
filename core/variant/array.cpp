@@ -190,13 +190,13 @@ uint32_t Array::recursive_hash(int recursion_count) const {
 		return 0;
 	}
 
-	uint32_t h = hash_djb2_one_32(Variant::ARRAY);
+	uint32_t h = hash_murmur3_one_32(Variant::ARRAY);
 
 	recursion_count++;
 	for (int i = 0; i < _p->array.size(); i++) {
-		h = hash_djb2_one_32(_p->array[i].recursive_hash(recursion_count), h);
+		h = hash_murmur3_one_32(_p->array[i].recursive_hash(recursion_count), h);
 	}
-	return h;
+	return hash_fmix32(h);
 }
 
 bool Array::_assign(const Array &p_array) {
@@ -260,7 +260,9 @@ void Array::push_back(const Variant &p_value) {
 
 void Array::append_array(const Array &p_array) {
 	ERR_FAIL_COND_MSG(_p->read_only, "Array is in read-only state.");
-	ERR_FAIL_COND(!_p->typed.validate(p_array, "append_array"));
+	for (int i = 0; i < p_array.size(); ++i) {
+		ERR_FAIL_COND(!_p->typed.validate(p_array[i], "append_array"));
+	}
 	_p->array.append_array(p_array._p->array);
 }
 

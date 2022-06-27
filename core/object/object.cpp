@@ -164,161 +164,6 @@ MethodInfo MethodInfo::from_dict(const Dictionary &p_dict) {
 	return mi;
 }
 
-MethodInfo::MethodInfo() :
-		flags(METHOD_FLAG_NORMAL) {}
-
-MethodInfo::MethodInfo(const String &p_name) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-}
-
-MethodInfo::MethodInfo(const String &p_name, const PropertyInfo &p_param1) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-}
-
-MethodInfo::MethodInfo(const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-}
-
-MethodInfo::MethodInfo(const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-}
-
-MethodInfo::MethodInfo(const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3, const PropertyInfo &p_param4) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-	arguments.push_back(p_param4);
-}
-
-MethodInfo::MethodInfo(const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3, const PropertyInfo &p_param4, const PropertyInfo &p_param5) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-	arguments.push_back(p_param4);
-	arguments.push_back(p_param5);
-}
-
-MethodInfo::MethodInfo(Variant::Type ret) :
-		flags(METHOD_FLAG_NORMAL) {
-	return_val.type = ret;
-}
-
-MethodInfo::MethodInfo(Variant::Type ret, const String &p_name) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	return_val.type = ret;
-}
-
-MethodInfo::MethodInfo(Variant::Type ret, const String &p_name, const PropertyInfo &p_param1) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	return_val.type = ret;
-	arguments.push_back(p_param1);
-}
-
-MethodInfo::MethodInfo(Variant::Type ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	return_val.type = ret;
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-}
-
-MethodInfo::MethodInfo(Variant::Type ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	return_val.type = ret;
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-}
-
-MethodInfo::MethodInfo(Variant::Type ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3, const PropertyInfo &p_param4) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	return_val.type = ret;
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-	arguments.push_back(p_param4);
-}
-
-MethodInfo::MethodInfo(Variant::Type ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3, const PropertyInfo &p_param4, const PropertyInfo &p_param5) :
-		name(p_name),
-		flags(METHOD_FLAG_NORMAL) {
-	return_val.type = ret;
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-	arguments.push_back(p_param4);
-	arguments.push_back(p_param5);
-}
-
-MethodInfo::MethodInfo(const PropertyInfo &p_ret, const String &p_name) :
-		name(p_name),
-		return_val(p_ret),
-		flags(METHOD_FLAG_NORMAL) {
-}
-
-MethodInfo::MethodInfo(const PropertyInfo &p_ret, const String &p_name, const PropertyInfo &p_param1) :
-		name(p_name),
-		return_val(p_ret),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-}
-
-MethodInfo::MethodInfo(const PropertyInfo &p_ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2) :
-		name(p_name),
-		return_val(p_ret),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-}
-
-MethodInfo::MethodInfo(const PropertyInfo &p_ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3) :
-		name(p_name),
-		return_val(p_ret),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-}
-
-MethodInfo::MethodInfo(const PropertyInfo &p_ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3, const PropertyInfo &p_param4) :
-		name(p_name),
-		return_val(p_ret),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-	arguments.push_back(p_param4);
-}
-
-MethodInfo::MethodInfo(const PropertyInfo &p_ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3, const PropertyInfo &p_param4, const PropertyInfo &p_param5) :
-		name(p_name),
-		return_val(p_ret),
-		flags(METHOD_FLAG_NORMAL) {
-	arguments.push_back(p_param1);
-	arguments.push_back(p_param2);
-	arguments.push_back(p_param3);
-	arguments.push_back(p_param4);
-	arguments.push_back(p_param5);
-}
-
 Object::Connection::operator Variant() const {
 	Dictionary d;
 	d["signal"] = signal;
@@ -1228,7 +1073,7 @@ Array Object::_get_signal_list() const {
 	return ret;
 }
 
-Array Object::_get_signal_connection_list(const String &p_signal) const {
+Array Object::_get_signal_connection_list(const StringName &p_signal) const {
 	List<Connection> conns;
 	get_all_signal_connections(&conns);
 
@@ -1454,11 +1299,11 @@ void Object::_disconnect(const StringName &p_signal, const Callable &p_callable,
 	}
 }
 
-void Object::_set_bind(const String &p_set, const Variant &p_value) {
+void Object::_set_bind(const StringName &p_set, const Variant &p_value) {
 	set(p_set, p_value);
 }
 
-Variant Object::_get_bind(const String &p_name) const {
+Variant Object::_get_bind(const StringName &p_name) const {
 	return get(p_name);
 }
 

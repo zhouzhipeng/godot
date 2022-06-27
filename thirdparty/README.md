@@ -62,7 +62,7 @@ Files extracted from upstream source:
 ## doctest
 
 - Upstream: https://github.com/onqtam/doctest
-- Version: 2.4.8 (7b9885133108ae301ddd16e2651320f54cafeba7, 2022)
+- Version: 2.4.9 (b7c21ec5ceeadb4951b00396fc1e4642dd347e5f, 2022)
 - License: MIT
 
 Files extracted from upstream source:
@@ -254,6 +254,7 @@ Files generated from upstream source:
 Files extracted from upstream source:
 
 - `jpgd*.{c,h}`
+- `jpge*.{c,h}`
 
 
 ## libogg
@@ -525,7 +526,7 @@ Patch files are provided in `oidn/patches/`.
 ## openxr
 
 - Upstream: https://github.com/KhronosGroup/OpenXR-SDK
-- Version: 1.0.22 (458984d7f59d1ae6dc1b597d94b02e4f7132eaba, 2022)
+- Version: 1.0.23 (885a90f8934d84121344ba8e4aa5159d5b496e08, 2022)
 - License: Apache 2.0
 
 Files extracted from upstream source:
@@ -709,7 +710,7 @@ Files extracted from upstream source:
 SDK release: https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/master/layers/generated/vk_enum_string_helper.h
 
 `vk_mem_alloc.h` is taken from https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-Version: 3.0.1-development (2022-03-28), commit `5b598e0a359381d7e2a94149210a1b7642024ae5`
+Version: 3.0.1 (2022-06-10), commit `cfdc0f8775ab3258a3b9c4e47d8ce4b6f52a5441`
 `vk_mem_alloc.cpp` is a Godot file and should be preserved on updates.
 
 Patches in the `patches` directory should be re-applied after updates.

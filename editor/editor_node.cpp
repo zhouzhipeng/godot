@@ -582,9 +582,10 @@ void EditorNode::_notification(int p_what) {
 				opening_prev = false;
 			}
 
+			bool unsaved_cache_changed = false;
 			if (unsaved_cache != (saved_version != editor_data.get_undo_redo().get_version())) {
 				unsaved_cache = (saved_version != editor_data.get_undo_redo().get_version());
-				_update_title();
+				unsaved_cache_changed = true;
 			}
 
 			if (last_checked_version != editor_data.get_undo_redo().get_version()) {
@@ -614,6 +615,10 @@ void EditorNode::_notification(int p_what) {
 			editor_selection->update();
 
 			ResourceImporterTexture::get_singleton()->update_imports();
+
+			if (settings_changed || unsaved_cache_changed) {
+				_update_title();
+			}
 
 			if (settings_changed) {
 				_update_from_settings();
@@ -876,7 +881,7 @@ void EditorNode::_resources_changed(const Vector<String> &p_resources) {
 
 	int rc = p_resources.size();
 	for (int i = 0; i < rc; i++) {
-		Ref<Resource> res(ResourceCache::get(p_resources.get(i)));
+		Ref<Resource> res = ResourceCache::get_ref(p_resources.get(i));
 		if (res.is_null()) {
 			continue;
 		}
@@ -1006,8 +1011,8 @@ void EditorNode::_resources_reimported(const Vector<String> &p_resources) {
 			continue;
 		}
 		// Reload normally.
-		Resource *resource = ResourceCache::get(p_resources[i]);
-		if (resource) {
+		Ref<Resource> resource = ResourceCache::get_ref(p_resources[i]);
+		if (resource.is_valid()) {
 			resource->reload_from_file();
 		}
 	}
@@ -1720,7 +1725,7 @@ void EditorNode::_save_scene(String p_file, int idx) {
 		// We must update it, but also let the previous scene state go, as
 		// old version still work for referencing changes in instantiated or inherited scenes.
 
-		sdata = Ref<PackedScene>(Object::cast_to<PackedScene>(ResourceCache::get(p_file)));
+		sdata = ResourceCache::get_ref(p_file);
 		if (sdata.is_valid()) {
 			sdata->recreate_state();
 		} else {
@@ -1791,6 +1796,10 @@ void EditorNode::save_scene_list(Vector<String> p_scene_filenames) {
 
 void EditorNode::restart_editor() {
 	exiting = true;
+
+	if (editor_run.get_status() != EditorRun::STATUS_STOP) {
+		editor_run.stop();
+	}
 
 	String to_reopen;
 	if (get_tree()->get_edited_scene_root()) {
@@ -2338,6 +2347,20 @@ void EditorNode::_run(bool p_current, const String &p_custom) {
 		return;
 	}
 
+	String write_movie_file;
+	if (write_movie_button->is_pressed()) {
+		if (p_current && get_tree()->get_edited_scene_root() && get_tree()->get_edited_scene_root()->has_meta("movie_file")) {
+			// If the scene file has a movie_file metadata set, use this as file. Quick workaround if you want to have multiple scenes that write to multiple movies.
+			write_movie_file = get_tree()->get_edited_scene_root()->get_meta("movie_file");
+		} else {
+			write_movie_file = GLOBAL_GET("editor/movie_writer/movie_file");
+		}
+		if (write_movie_file == String()) {
+			show_accept(TTR("Movie Maker mode is enabled, but no movie file path has been specified.\nA default movie file path can be specified in the project settings under the 'Editor/Movie Writer' category.\nAlternatively, for running single scenes, a 'movie_path' metadata can be added to the root node,\nspecifying the path to a movie file that will be used when recording that scene."), TTR("OK"));
+			return;
+		}
+	}
+
 	play_button->set_pressed(false);
 	play_button->set_icon(gui_base->get_theme_icon(SNAME("MainPlay"), SNAME("EditorIcons")));
 	play_scene_button->set_pressed(false);
@@ -2401,7 +2424,7 @@ void EditorNode::_run(bool p_current, const String &p_custom) {
 	}
 
 	EditorDebuggerNode::get_singleton()->start();
-	Error error = editor_run.run(run_filename);
+	Error error = editor_run.run(run_filename, write_movie_file);
 	if (error != OK) {
 		EditorDebuggerNode::get_singleton()->stop();
 		show_accept(TTR("Could not start subprocess(es)!"), TTR("OK"));
@@ -2783,6 +2806,9 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		} break;
 		case RUN_SETTINGS: {
 			project_settings_editor->popup_project_settings();
+		} break;
+		case RUN_WRITE_MOVIE: {
+			_update_write_movie_icon();
 		} break;
 		case FILE_INSTALL_ANDROID_SOURCE: {
 			if (p_confirmed) {
@@ -3299,33 +3325,39 @@ void EditorNode::_update_addon_config() {
 }
 
 void EditorNode::set_addon_plugin_enabled(const String &p_addon, bool p_enabled, bool p_config_changed) {
-	ERR_FAIL_COND(p_enabled && addon_name_to_plugin.has(p_addon));
-	ERR_FAIL_COND(!p_enabled && !addon_name_to_plugin.has(p_addon));
+	String addon_path = p_addon;
+
+	if (!addon_path.begins_with("res://")) {
+		addon_path = "res://addons/" + addon_path + "/plugin.cfg";
+	}
+
+	ERR_FAIL_COND(p_enabled && addon_name_to_plugin.has(addon_path));
+	ERR_FAIL_COND(!p_enabled && !addon_name_to_plugin.has(addon_path));
 
 	if (!p_enabled) {
-		EditorPlugin *addon = addon_name_to_plugin[p_addon];
+		EditorPlugin *addon = addon_name_to_plugin[addon_path];
 		remove_editor_plugin(addon, p_config_changed);
 		memdelete(addon);
-		addon_name_to_plugin.erase(p_addon);
+		addon_name_to_plugin.erase(addon_path);
 		_update_addon_config();
 		return;
 	}
 
 	Ref<ConfigFile> cf;
 	cf.instantiate();
-	if (!DirAccess::exists(p_addon.get_base_dir())) {
-		_remove_plugin_from_enabled(p_addon);
-		WARN_PRINT("Addon '" + p_addon + "' failed to load. No directory found. Removing from enabled plugins.");
+	if (!DirAccess::exists(addon_path.get_base_dir())) {
+		_remove_plugin_from_enabled(addon_path);
+		WARN_PRINT("Addon '" + addon_path + "' failed to load. No directory found. Removing from enabled plugins.");
 		return;
 	}
-	Error err = cf->load(p_addon);
+	Error err = cf->load(addon_path);
 	if (err != OK) {
-		show_warning(vformat(TTR("Unable to enable addon plugin at: '%s' parsing of config failed."), p_addon));
+		show_warning(vformat(TTR("Unable to enable addon plugin at: '%s' parsing of config failed."), addon_path));
 		return;
 	}
 
 	if (!cf->has_section_key("plugin", "script")) {
-		show_warning(vformat(TTR("Unable to find script field for addon plugin at: '%s'."), p_addon));
+		show_warning(vformat(TTR("Unable to find script field for addon plugin at: '%s'."), addon_path));
 		return;
 	}
 
@@ -3334,7 +3366,7 @@ void EditorNode::set_addon_plugin_enabled(const String &p_addon, bool p_enabled,
 
 	// Only try to load the script if it has a name. Else, the plugin has no init script.
 	if (script_path.length() > 0) {
-		script_path = p_addon.get_base_dir().plus_file(script_path);
+		script_path = addon_path.get_base_dir().plus_file(script_path);
 		script = ResourceLoader::load(script_path);
 
 		if (script.is_null()) {
@@ -3344,8 +3376,8 @@ void EditorNode::set_addon_plugin_enabled(const String &p_addon, bool p_enabled,
 
 		// Errors in the script cause the base_type to be an empty StringName.
 		if (script->get_instance_base_type() == StringName()) {
-			show_warning(vformat(TTR("Unable to load addon script from path: '%s'. This might be due to a code error in that script.\nDisabling the addon at '%s' to prevent further errors."), script_path, p_addon));
-			_remove_plugin_from_enabled(p_addon);
+			show_warning(vformat(TTR("Unable to load addon script from path: '%s'. This might be due to a code error in that script.\nDisabling the addon at '%s' to prevent further errors."), script_path, addon_path));
+			_remove_plugin_from_enabled(addon_path);
 			return;
 		}
 
@@ -3363,14 +3395,18 @@ void EditorNode::set_addon_plugin_enabled(const String &p_addon, bool p_enabled,
 
 	EditorPlugin *ep = memnew(EditorPlugin);
 	ep->set_script(script);
-	addon_name_to_plugin[p_addon] = ep;
+	addon_name_to_plugin[addon_path] = ep;
 	add_editor_plugin(ep, p_config_changed);
 
 	_update_addon_config();
 }
 
 bool EditorNode::is_addon_plugin_enabled(const String &p_addon) const {
-	return addon_name_to_plugin.has(p_addon);
+	if (p_addon.begins_with("res://")) {
+		return addon_name_to_plugin.has(p_addon);
+	}
+
+	return addon_name_to_plugin.has("res://addons/" + p_addon + "/plugin.cfg");
 }
 
 void EditorNode::_remove_edited_scene(bool p_change_tab) {
@@ -3681,7 +3717,7 @@ Error EditorNode::load_scene(const String &p_scene, bool p_ignore_broken_deps, b
 
 	if (ResourceCache::has(lpath)) {
 		// Used from somewhere else? No problem! Update state and replace sdata.
-		Ref<PackedScene> ps = Ref<PackedScene>(Object::cast_to<PackedScene>(ResourceCache::get(lpath)));
+		Ref<PackedScene> ps = ResourceCache::get_ref(lpath);
 		if (ps.is_valid()) {
 			ps->replace_state(sdata->get_state());
 			ps->set_last_modified_time(sdata->get_last_modified_time());
@@ -4936,6 +4972,14 @@ String EditorNode::get_run_playing_scene() const {
 	}
 
 	return run_filename;
+}
+
+void EditorNode::_update_write_movie_icon() {
+	if (write_movie_button->is_pressed()) {
+		write_movie_button->set_icon(gui_base->get_theme_icon(SNAME("MainMovieWriteEnabled"), SNAME("EditorIcons")));
+	} else {
+		write_movie_button->set_icon(gui_base->get_theme_icon(SNAME("MainMovieWrite"), SNAME("EditorIcons")));
+	}
 }
 
 void EditorNode::_immediate_dialog_confirmed() {
@@ -6693,6 +6737,23 @@ EditorNode::EditorNode() {
 	ED_SHORTCUT_OVERRIDE("editor/play_custom_scene", "macos", KeyModifierMask::CMD | KeyModifierMask::SHIFT | Key::R);
 	play_custom_scene_button->set_shortcut(ED_GET_SHORTCUT("editor/play_custom_scene"));
 
+	write_movie_button = memnew(Button);
+	write_movie_button->set_flat(true);
+	write_movie_button->set_toggle_mode(true);
+	play_hb->add_child(write_movie_button);
+	write_movie_button->set_pressed(false);
+	write_movie_button->set_icon(gui_base->get_theme_icon(SNAME("MainMovieWrite"), SNAME("EditorIcons")));
+	write_movie_button->set_focus_mode(Control::FOCUS_NONE);
+	write_movie_button->connect("pressed", callable_mp(this, &EditorNode::_menu_option), make_binds(RUN_WRITE_MOVIE));
+	write_movie_button->set_tooltip(TTR("Enable Movie Maker mode.\nThe project will run at stable FPS and the visual and audio output will be recorded to a video file."));
+	// Restore these values to something more useful so it ignores the theme
+	write_movie_button->add_theme_color_override("icon_normal_color", Color(1, 1, 1, 0.4));
+	write_movie_button->add_theme_color_override("icon_pressed_color", Color(1, 1, 1, 1));
+	write_movie_button->add_theme_color_override("icon_hover_color", Color(1.2, 1.2, 1.2, 0.4));
+	write_movie_button->add_theme_color_override("icon_hover_pressed_color", Color(1.2, 1.2, 1.2, 1));
+	write_movie_button->add_theme_color_override("icon_focus_color", Color(1, 1, 1, 1));
+	write_movie_button->add_theme_color_override("icon_disabled_color", Color(1, 1, 1, 0.4));
+
 	HBoxContainer *right_menu_hb = memnew(HBoxContainer);
 	menu_hb->add_child(right_menu_hb);
 
@@ -7043,7 +7104,6 @@ EditorNode::EditorNode() {
 	add_editor_plugin(VersionControlEditorPlugin::get_singleton());
 	add_editor_plugin(memnew(ShaderEditorPlugin));
 	add_editor_plugin(memnew(ShaderFileEditorPlugin));
-	add_editor_plugin(memnew(VisualShaderEditorPlugin));
 
 	add_editor_plugin(memnew(Camera3DEditorPlugin));
 	add_editor_plugin(memnew(ThemeEditorPlugin));

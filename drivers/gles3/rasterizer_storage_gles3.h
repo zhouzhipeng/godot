@@ -98,6 +98,9 @@ public:
 		}
 	}
 
+	// Buffer size is specified in bytes
+	static Vector<uint8_t> buffer_get_data(GLenum p_target, GLuint p_buffer, uint32_t p_buffer_size);
+
 	struct Resources {
 		GLuint mipmap_blur_fbo;
 		GLuint mipmap_blur_color;
@@ -150,47 +153,6 @@ public:
 
 public:
 	virtual void base_update_dependency(RID p_base, DependencyTracker *p_instance) override;
-
-	/* VOXEL GI API */
-
-	RID voxel_gi_allocate() override;
-	void voxel_gi_initialize(RID p_rid) override;
-	void voxel_gi_allocate_data(RID p_voxel_gi, const Transform3D &p_to_cell_xform, const AABB &p_aabb, const Vector3i &p_octree_size, const Vector<uint8_t> &p_octree_cells, const Vector<uint8_t> &p_data_cells, const Vector<uint8_t> &p_distance_field, const Vector<int> &p_level_counts) override;
-
-	AABB voxel_gi_get_bounds(RID p_voxel_gi) const override;
-	Vector3i voxel_gi_get_octree_size(RID p_voxel_gi) const override;
-	Vector<uint8_t> voxel_gi_get_octree_cells(RID p_voxel_gi) const override;
-	Vector<uint8_t> voxel_gi_get_data_cells(RID p_voxel_gi) const override;
-	Vector<uint8_t> voxel_gi_get_distance_field(RID p_voxel_gi) const override;
-
-	Vector<int> voxel_gi_get_level_counts(RID p_voxel_gi) const override;
-	Transform3D voxel_gi_get_to_cell_xform(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_dynamic_range(RID p_voxel_gi, float p_range) override;
-	float voxel_gi_get_dynamic_range(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_propagation(RID p_voxel_gi, float p_range) override;
-	float voxel_gi_get_propagation(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_energy(RID p_voxel_gi, float p_range) override;
-	float voxel_gi_get_energy(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_bias(RID p_voxel_gi, float p_range) override;
-	float voxel_gi_get_bias(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_normal_bias(RID p_voxel_gi, float p_range) override;
-	float voxel_gi_get_normal_bias(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_interior(RID p_voxel_gi, bool p_enable) override;
-	bool voxel_gi_is_interior(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_use_two_bounces(RID p_voxel_gi, bool p_enable) override;
-	bool voxel_gi_is_using_two_bounces(RID p_voxel_gi) const override;
-
-	void voxel_gi_set_anisotropy_strength(RID p_voxel_gi, float p_strength) override;
-	float voxel_gi_get_anisotropy_strength(RID p_voxel_gi) const override;
-
-	uint32_t voxel_gi_get_version(RID p_voxel_gi) override;
 
 	/* OCCLUDER */
 
@@ -295,27 +257,9 @@ public:
 		return String();
 	}
 
-	//bool validate_framebuffer(); // Validate currently bound framebuffer, does not touch global state
-	String get_framebuffer_error(GLenum p_status);
-
 	RasterizerStorageGLES3();
 	~RasterizerStorageGLES3();
 };
-
-inline String RasterizerStorageGLES3::get_framebuffer_error(GLenum p_status) {
-#if defined(DEBUG_ENABLED) && defined(GLES_OVER_GL)
-	if (p_status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) {
-		return "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
-	} else if (p_status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT) {
-		return "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
-	} else if (p_status == GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER) {
-		return "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER";
-	} else if (p_status == GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER) {
-		return "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER";
-	}
-#endif
-	return itos(p_status);
-}
 
 #endif // GLES3_ENABLED
 

@@ -919,7 +919,7 @@ struct _VariantCall {
 	}
 
 	struct ConstantData {
-		HashMap<StringName, int> value;
+		HashMap<StringName, int64_t> value;
 #ifdef DEBUG_ENABLED
 		List<StringName> value_ordered;
 #endif
@@ -931,7 +931,7 @@ struct _VariantCall {
 
 	static ConstantData *constant_data;
 
-	static void add_constant(int p_type, StringName p_constant_name, int p_constant_value) {
+	static void add_constant(int p_type, StringName p_constant_name, int64_t p_constant_value) {
 		constant_data[p_type].value[p_constant_name] = p_constant_value;
 #ifdef DEBUG_ENABLED
 		constant_data[p_type].value_ordered.push_back(p_constant_name);
@@ -944,9 +944,20 @@ struct _VariantCall {
 		constant_data[p_type].variant_value_ordered.push_back(p_constant_name);
 #endif
 	}
+
+	struct EnumData {
+		HashMap<StringName, HashMap<StringName, int>> value;
+	};
+
+	static EnumData *enum_data;
+
+	static void add_enum_constant(int p_type, StringName p_enum_type_name, StringName p_enumeration_name, int p_enum_value) {
+		enum_data[p_type].value[p_enum_type_name][p_enumeration_name] = p_enum_value;
+	}
 };
 
 _VariantCall::ConstantData *_VariantCall::constant_data = nullptr;
+_VariantCall::EnumData *_VariantCall::enum_data = nullptr;
 
 struct VariantBuiltInMethodInfo {
 	void (*call)(Variant *base, const Variant **p_args, int p_argcount, Variant &r_ret, const Vector<Variant> &p_defvals, Callable::CallError &r_error) = nullptr;
@@ -1170,19 +1181,19 @@ uint32_t Variant::get_builtin_method_hash(Variant::Type p_type, const StringName
 	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, 0);
 	const VariantBuiltInMethodInfo *method = builtin_method_info[p_type].lookup_ptr(p_method);
 	ERR_FAIL_COND_V(!method, 0);
-	uint32_t hash = hash_djb2_one_32(method->is_const);
-	hash = hash_djb2_one_32(method->is_static, hash);
-	hash = hash_djb2_one_32(method->is_vararg, hash);
-	hash = hash_djb2_one_32(method->has_return_type, hash);
+	uint32_t hash = hash_murmur3_one_32(method->is_const);
+	hash = hash_murmur3_one_32(method->is_static, hash);
+	hash = hash_murmur3_one_32(method->is_vararg, hash);
+	hash = hash_murmur3_one_32(method->has_return_type, hash);
 	if (method->has_return_type) {
-		hash = hash_djb2_one_32(method->return_type, hash);
+		hash = hash_murmur3_one_32(method->return_type, hash);
 	}
-	hash = hash_djb2_one_32(method->argument_count, hash);
+	hash = hash_murmur3_one_32(method->argument_count, hash);
 	for (int i = 0; i < method->argument_count; i++) {
-		hash = method->get_argument_type(i);
+		hash = hash_murmur3_one_32(method->get_argument_type(i), hash);
 	}
 
-	return hash;
+	return hash_fmix32(hash);
 }
 
 void Variant::get_method_list(List<MethodInfo> *p_list) const {
@@ -1245,7 +1256,7 @@ void Variant::get_constants_for_type(Variant::Type p_type, List<StringName> *p_c
 	for (const List<StringName>::Element *E = cd.value_ordered.front(); E; E = E->next()) {
 		p_constants->push_back(E->get());
 #else
-	for (const KeyValue<StringName, int> &E : cd.value) {
+	for (const KeyValue<StringName, int64_t> &E : cd.value) {
 		p_constants->push_back(E.key);
 #endif
 	}
@@ -1281,7 +1292,7 @@ Variant Variant::get_constant_value(Variant::Type p_type, const StringName &p_va
 	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, 0);
 	_VariantCall::ConstantData &cd = _VariantCall::constant_data[p_type];
 
-	HashMap<StringName, int>::Iterator E = cd.value.find(p_value);
+	HashMap<StringName, int64_t>::Iterator E = cd.value.find(p_value);
 	if (!E) {
 		HashMap<StringName, Variant>::Iterator F = cd.variant_value.find(p_value);
 		if (F) {
@@ -1298,6 +1309,54 @@ Variant Variant::get_constant_value(Variant::Type p_type, const StringName &p_va
 	}
 
 	return E->value;
+}
+
+void Variant::get_enums_for_type(Variant::Type p_type, List<StringName> *p_enums) {
+	ERR_FAIL_INDEX(p_type, Variant::VARIANT_MAX);
+
+	_VariantCall::EnumData &enum_data = _VariantCall::enum_data[p_type];
+
+	for (const KeyValue<StringName, HashMap<StringName, int>> &E : enum_data.value) {
+		p_enums->push_back(E.key);
+	}
+}
+
+void Variant::get_enumerations_for_enum(Variant::Type p_type, StringName p_enum_name, List<StringName> *p_enumerations) {
+	ERR_FAIL_INDEX(p_type, Variant::VARIANT_MAX);
+
+	_VariantCall::EnumData &enum_data = _VariantCall::enum_data[p_type];
+
+	for (const KeyValue<StringName, HashMap<StringName, int>> &E : enum_data.value) {
+		for (const KeyValue<StringName, int> &V : E.value) {
+			p_enumerations->push_back(V.key);
+		}
+	}
+}
+
+int Variant::get_enum_value(Variant::Type p_type, StringName p_enum_name, StringName p_enumeration, bool *r_valid) {
+	if (r_valid) {
+		*r_valid = false;
+	}
+
+	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, -1);
+
+	_VariantCall::EnumData &enum_data = _VariantCall::enum_data[p_type];
+
+	HashMap<StringName, HashMap<StringName, int>>::Iterator E = enum_data.value.find(p_enum_name);
+	if (!E) {
+		return -1;
+	}
+
+	HashMap<StringName, int>::Iterator V = E->value.find(p_enumeration);
+	if (!V) {
+		return -1;
+	}
+
+	if (r_valid) {
+		*r_valid = true;
+	}
+
+	return V->value;
 }
 
 #ifdef DEBUG_METHODS_ENABLED
@@ -1360,6 +1419,7 @@ Variant Variant::get_constant_value(Variant::Type p_type, const StringName &p_va
 
 static void _register_variant_builtin_methods() {
 	_VariantCall::constant_data = memnew_arr(_VariantCall::ConstantData, Variant::VARIANT_MAX);
+	_VariantCall::enum_data = memnew_arr(_VariantCall::EnumData, Variant::VARIANT_MAX);
 	builtin_method_info = memnew_arr(BuiltinMethodMap, Variant::VARIANT_MAX);
 	builtin_method_names = memnew_arr(List<StringName>, Variant::VARIANT_MAX);
 
@@ -2127,6 +2187,10 @@ static void _register_variant_builtin_methods() {
 	_VariantCall::add_constant(Variant::VECTOR3, "AXIS_Y", Vector3::AXIS_Y);
 	_VariantCall::add_constant(Variant::VECTOR3, "AXIS_Z", Vector3::AXIS_Z);
 
+	_VariantCall::add_enum_constant(Variant::VECTOR3, "Axis", "AXIS_X", Vector3::AXIS_X);
+	_VariantCall::add_enum_constant(Variant::VECTOR3, "Axis", "AXIS_Y", Vector3::AXIS_Y);
+	_VariantCall::add_enum_constant(Variant::VECTOR3, "Axis", "AXIS_Z", Vector3::AXIS_Z);
+
 	_VariantCall::add_variant_constant(Variant::VECTOR3, "ZERO", Vector3(0, 0, 0));
 	_VariantCall::add_variant_constant(Variant::VECTOR3, "ONE", Vector3(1, 1, 1));
 	_VariantCall::add_variant_constant(Variant::VECTOR3, "INF", Vector3(INFINITY, INFINITY, INFINITY));
@@ -2141,6 +2205,10 @@ static void _register_variant_builtin_methods() {
 	_VariantCall::add_constant(Variant::VECTOR3I, "AXIS_Y", Vector3i::AXIS_Y);
 	_VariantCall::add_constant(Variant::VECTOR3I, "AXIS_Z", Vector3i::AXIS_Z);
 
+	_VariantCall::add_enum_constant(Variant::VECTOR3I, "Axis", "AXIS_X", Vector3i::AXIS_X);
+	_VariantCall::add_enum_constant(Variant::VECTOR3I, "Axis", "AXIS_Y", Vector3i::AXIS_Y);
+	_VariantCall::add_enum_constant(Variant::VECTOR3I, "Axis", "AXIS_Z", Vector3i::AXIS_Z);
+
 	_VariantCall::add_variant_constant(Variant::VECTOR3I, "ZERO", Vector3i(0, 0, 0));
 	_VariantCall::add_variant_constant(Variant::VECTOR3I, "ONE", Vector3i(1, 1, 1));
 	_VariantCall::add_variant_constant(Variant::VECTOR3I, "LEFT", Vector3i(-1, 0, 0));
@@ -2153,8 +2221,14 @@ static void _register_variant_builtin_methods() {
 	_VariantCall::add_constant(Variant::VECTOR2, "AXIS_X", Vector2::AXIS_X);
 	_VariantCall::add_constant(Variant::VECTOR2, "AXIS_Y", Vector2::AXIS_Y);
 
+	_VariantCall::add_enum_constant(Variant::VECTOR2, "Axis", "AXIS_X", Vector2::AXIS_X);
+	_VariantCall::add_enum_constant(Variant::VECTOR2, "Axis", "AXIS_Y", Vector2::AXIS_Y);
+
 	_VariantCall::add_constant(Variant::VECTOR2I, "AXIS_X", Vector2i::AXIS_X);
 	_VariantCall::add_constant(Variant::VECTOR2I, "AXIS_Y", Vector2i::AXIS_Y);
+
+	_VariantCall::add_enum_constant(Variant::VECTOR2I, "Axis", "AXIS_X", Vector2i::AXIS_X);
+	_VariantCall::add_enum_constant(Variant::VECTOR2I, "Axis", "AXIS_Y", Vector2i::AXIS_Y);
 
 	_VariantCall::add_variant_constant(Variant::VECTOR2, "ZERO", Vector2(0, 0));
 	_VariantCall::add_variant_constant(Variant::VECTOR2, "ONE", Vector2(1, 1));
@@ -2177,6 +2251,13 @@ static void _register_variant_builtin_methods() {
 	_VariantCall::add_constant(Variant::BASIS, "EULER_ORDER_YZX", Basis::EULER_ORDER_YZX);
 	_VariantCall::add_constant(Variant::BASIS, "EULER_ORDER_ZXY", Basis::EULER_ORDER_ZXY);
 	_VariantCall::add_constant(Variant::BASIS, "EULER_ORDER_ZYX", Basis::EULER_ORDER_ZYX);
+
+	_VariantCall::add_enum_constant(Variant::BASIS, "EulerOrder", "EULER_ORDER_XYZ", Basis::EULER_ORDER_XYZ);
+	_VariantCall::add_enum_constant(Variant::BASIS, "EulerOrder", "EULER_ORDER_XZY", Basis::EULER_ORDER_XZY);
+	_VariantCall::add_enum_constant(Variant::BASIS, "EulerOrder", "EULER_ORDER_YXZ", Basis::EULER_ORDER_YXZ);
+	_VariantCall::add_enum_constant(Variant::BASIS, "EulerOrder", "EULER_ORDER_YZX", Basis::EULER_ORDER_YZX);
+	_VariantCall::add_enum_constant(Variant::BASIS, "EulerOrder", "EULER_ORDER_ZXY", Basis::EULER_ORDER_ZXY);
+	_VariantCall::add_enum_constant(Variant::BASIS, "EulerOrder", "EULER_ORDER_ZYX", Basis::EULER_ORDER_ZYX);
 
 	_VariantCall::add_variant_constant(Variant::TRANSFORM2D, "IDENTITY", Transform2D());
 	_VariantCall::add_variant_constant(Variant::TRANSFORM2D, "FLIP_X", Transform2D(-1, 0, 0, 1, 0, 0));
@@ -2216,4 +2297,5 @@ void Variant::_unregister_variant_methods() {
 	memdelete_arr(builtin_method_names);
 	memdelete_arr(builtin_method_info);
 	memdelete_arr(_VariantCall::constant_data);
+	memdelete_arr(_VariantCall::enum_data);
 }
