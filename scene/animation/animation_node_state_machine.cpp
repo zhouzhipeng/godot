@@ -845,7 +845,7 @@ Vector<StringName>  AnimationNodeStateMachine::get_states_names() const
 	return names;
 }
 
-Ref<AnimationNodeStateMachine> AnimationNodeStateMachine::get_prev_state_machine() const {
+AnimationNodeStateMachine * AnimationNodeStateMachine::get_prev_state_machine() const {
 	return prev_state_machine;
 }
 
