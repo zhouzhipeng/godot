@@ -118,7 +118,7 @@ will limit its functionality to IPv4 only.
 ## etcpak
 
 - Upstream: https://github.com/wolfpld/etcpak
-- Version: 1.0 (a77d5a37ddf48034cee8aeb9e8792a623c265b4c, 2022)
+- Version: 1.0 (153f0e04a18b93c277684b577365210adcf8e11c, 2022)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -213,7 +213,7 @@ Files extracted from upstream source:
 ## harfbuzz
 
 - Upstream: https://github.com/harfbuzz/harfbuzz
-- Version: 4.3.0 (aee123fc83388b8f5acfb301d87bd92eccc5b843, 2022)
+- Version: 4.4.1 (096aaa62a6e0d07c02a4894fc036efc927e5aaf9, 2022)
 - License: MIT
 
 Files extracted from upstream source:
@@ -759,7 +759,7 @@ Files extracted from upstream source:
 ## zstd
 
 - Upstream: https://github.com/facebook/zstd
-- Version: 1.5.0 (a488ba114ec17ea1054b9057c26a046fc122b3b6, 2021)
+- Version: 1.5.2 (e47e674cd09583ff0503f0f6defd6d23d8b718d3, 2022)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:

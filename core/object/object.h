@@ -67,6 +67,7 @@ enum PropertyHint {
 	PROPERTY_HINT_GLOBAL_DIR, ///< a directory path must be passed
 	PROPERTY_HINT_RESOURCE_TYPE, ///< a resource object type
 	PROPERTY_HINT_MULTILINE_TEXT, ///< used for string properties that can contain multiple lines
+	PROPERTY_HINT_EXPRESSION, ///< used for string properties that can contain multiple lines
 	PROPERTY_HINT_PLACEHOLDER_TEXT, ///< used to set a placeholder text for string properties
 	PROPERTY_HINT_COLOR_NO_ALPHA, ///< used for ignoring alpha component when editing a color
 	PROPERTY_HINT_IMAGE_COMPRESS_LOSSY,
@@ -91,6 +92,7 @@ enum PropertyHint {
 	PROPERTY_HINT_INT_IS_POINTER,
 	PROPERTY_HINT_LOCALE_ID,
 	PROPERTY_HINT_LOCALIZABLE_STRING,
+	PROPERTY_HINT_NODE_TYPE, ///< a node object type
 	PROPERTY_HINT_MAX,
 	// When updating PropertyHint, also sync the hardcoded list in VisualScriptEditorVariableEdit
 };
@@ -187,6 +189,14 @@ struct PropertyInfo {
 	PropertyInfo(const StringName &p_class_name) :
 			type(Variant::OBJECT),
 			class_name(p_class_name) {}
+
+	explicit PropertyInfo(const GDNativePropertyInfo &pinfo) :
+			type((Variant::Type)pinfo.type),
+			name(pinfo.name),
+			class_name(pinfo.class_name), // can be null
+			hint((PropertyHint)pinfo.hint),
+			hint_string(pinfo.hint_string), // can be null
+			usage(pinfo.usage) {}
 
 	bool operator==(const PropertyInfo &p_info) const {
 		return ((type == p_info.type) &&
@@ -762,6 +772,7 @@ public:
 
 	Variant callv(const StringName &p_method, const Array &p_args);
 	virtual Variant callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error);
+	virtual Variant call_const(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error);
 
 	template <typename... VarArgs>
 	Variant call(const StringName &p_method, VarArgs... p_args) {

@@ -496,7 +496,7 @@ void Object::get_property_list(List<PropertyInfo> *p_list, bool p_reversed) cons
 		uint32_t pcount;
 		const GDNativePropertyInfo *pinfo = _extension->get_property_list(_extension_instance, &pcount);
 		for (uint32_t i = 0; i < pcount; i++) {
-			p_list->push_back(PropertyInfo(Variant::Type(pinfo[i].type), pinfo[i].class_name, PropertyHint(pinfo[i].hint), pinfo[i].hint_string, pinfo[i].usage, pinfo[i].class_name));
+			p_list->push_back(PropertyInfo(pinfo[i]));
 		}
 		if (_extension->free_property_list) {
 			_extension->free_property_list(_extension_instance, pinfo);
@@ -685,6 +685,7 @@ Variant Object::callp(const StringName &p_method, const Variant **p_args, int p_
 			case Callable::CallError::CALL_ERROR_INVALID_ARGUMENT:
 			case Callable::CallError::CALL_ERROR_TOO_MANY_ARGUMENTS:
 			case Callable::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS:
+			case Callable::CallError::CALL_ERROR_METHOD_NOT_CONST:
 				return ret;
 			case Callable::CallError::CALL_ERROR_INSTANCE_IS_NULL: {
 			}
@@ -696,6 +697,54 @@ Variant Object::callp(const StringName &p_method, const Variant **p_args, int p_
 	MethodBind *method = ClassDB::get_method(get_class_name(), p_method);
 
 	if (method) {
+		ret = method->call(this, p_args, p_argcount, r_error);
+	} else {
+		r_error.error = Callable::CallError::CALL_ERROR_INVALID_METHOD;
+	}
+
+	return ret;
+}
+
+Variant Object::call_const(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
+	r_error.error = Callable::CallError::CALL_OK;
+
+	if (p_method == CoreStringNames::get_singleton()->_free) {
+		// Free is not const, so fail.
+		r_error.error = Callable::CallError::CALL_ERROR_METHOD_NOT_CONST;
+		return Variant();
+	}
+
+	Variant ret;
+	OBJ_DEBUG_LOCK
+
+	if (script_instance) {
+		ret = script_instance->call_const(p_method, p_args, p_argcount, r_error);
+		//force jumptable
+		switch (r_error.error) {
+			case Callable::CallError::CALL_OK:
+				return ret;
+			case Callable::CallError::CALL_ERROR_INVALID_METHOD:
+				break;
+			case Callable::CallError::CALL_ERROR_METHOD_NOT_CONST:
+				break;
+			case Callable::CallError::CALL_ERROR_INVALID_ARGUMENT:
+			case Callable::CallError::CALL_ERROR_TOO_MANY_ARGUMENTS:
+			case Callable::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS:
+				return ret;
+			case Callable::CallError::CALL_ERROR_INSTANCE_IS_NULL: {
+			}
+		}
+	}
+
+	//extension does not need this, because all methods are registered in MethodBind
+
+	MethodBind *method = ClassDB::get_method(get_class_name(), p_method);
+
+	if (method) {
+		if (!method->is_const()) {
+			r_error.error = Callable::CallError::CALL_ERROR_METHOD_NOT_CONST;
+			return ret;
+		}
 		ret = method->call(this, p_args, p_argcount, r_error);
 	} else {
 		r_error.error = Callable::CallError::CALL_ERROR_INVALID_METHOD;
