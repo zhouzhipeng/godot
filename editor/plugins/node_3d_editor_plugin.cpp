@@ -145,7 +145,7 @@ void ViewportRotationControl::_draw_axis(const Axis2D &p_axis) {
 
 		// Draw the axis letter for the positive axes.
 		const String axis_name = direction == 0 ? "X" : (direction == 1 ? "Y" : "Z");
-		draw_char(get_theme_font(SNAME("rotation_control"), SNAME("EditorFonts")), p_axis.screen_point + Vector2i(Math::round(-4.0 * EDSCALE), Math::round(5.0 * EDSCALE)), axis_name, "", get_theme_font_size(SNAME("rotation_control_size"), SNAME("EditorFonts")), Color(0.0, 0.0, 0.0, alpha));
+		draw_char(get_theme_font(SNAME("rotation_control"), SNAME("EditorFonts")), p_axis.screen_point + Vector2i(Math::round(-4.0 * EDSCALE), Math::round(5.0 * EDSCALE)), axis_name, get_theme_font_size(SNAME("rotation_control_size"), SNAME("EditorFonts")), Color(0.0, 0.0, 0.0, alpha));
 	} else {
 		// Draw an outline around the negative axes.
 		draw_circle(p_axis.screen_point, AXIS_CIRCLE_RADIUS, c);
@@ -2379,19 +2379,19 @@ void Node3DEditorPlugin::edited_scene_changed() {
 
 void Node3DEditorViewport::_project_settings_changed() {
 	//update shadow atlas if changed
-	int shadowmap_size = ProjectSettings::get_singleton()->get("rendering/shadows/shadow_atlas/size");
-	bool shadowmap_16_bits = ProjectSettings::get_singleton()->get("rendering/shadows/shadow_atlas/16_bits");
-	int atlas_q0 = ProjectSettings::get_singleton()->get("rendering/shadows/shadow_atlas/quadrant_0_subdiv");
-	int atlas_q1 = ProjectSettings::get_singleton()->get("rendering/shadows/shadow_atlas/quadrant_1_subdiv");
-	int atlas_q2 = ProjectSettings::get_singleton()->get("rendering/shadows/shadow_atlas/quadrant_2_subdiv");
-	int atlas_q3 = ProjectSettings::get_singleton()->get("rendering/shadows/shadow_atlas/quadrant_3_subdiv");
+	int shadowmap_size = ProjectSettings::get_singleton()->get("rendering/shadows/positional_shadow/atlas_size");
+	bool shadowmap_16_bits = ProjectSettings::get_singleton()->get("rendering/shadows/positional_shadow/atlas_16_bits");
+	int atlas_q0 = ProjectSettings::get_singleton()->get("rendering/shadows/positional_shadow/atlas_quadrant_0_subdiv");
+	int atlas_q1 = ProjectSettings::get_singleton()->get("rendering/shadows/positional_shadow/atlas_quadrant_1_subdiv");
+	int atlas_q2 = ProjectSettings::get_singleton()->get("rendering/shadows/positional_shadow/atlas_quadrant_2_subdiv");
+	int atlas_q3 = ProjectSettings::get_singleton()->get("rendering/shadows/positional_shadow/atlas_quadrant_3_subdiv");
 
-	viewport->set_shadow_atlas_size(shadowmap_size);
-	viewport->set_shadow_atlas_16_bits(shadowmap_16_bits);
-	viewport->set_shadow_atlas_quadrant_subdiv(0, Viewport::ShadowAtlasQuadrantSubdiv(atlas_q0));
-	viewport->set_shadow_atlas_quadrant_subdiv(1, Viewport::ShadowAtlasQuadrantSubdiv(atlas_q1));
-	viewport->set_shadow_atlas_quadrant_subdiv(2, Viewport::ShadowAtlasQuadrantSubdiv(atlas_q2));
-	viewport->set_shadow_atlas_quadrant_subdiv(3, Viewport::ShadowAtlasQuadrantSubdiv(atlas_q3));
+	viewport->set_positional_shadow_atlas_size(shadowmap_size);
+	viewport->set_positional_shadow_atlas_16_bits(shadowmap_16_bits);
+	viewport->set_positional_shadow_atlas_quadrant_subdiv(0, Viewport::PositionalShadowAtlasQuadrantSubdiv(atlas_q0));
+	viewport->set_positional_shadow_atlas_quadrant_subdiv(1, Viewport::PositionalShadowAtlasQuadrantSubdiv(atlas_q1));
+	viewport->set_positional_shadow_atlas_quadrant_subdiv(2, Viewport::PositionalShadowAtlasQuadrantSubdiv(atlas_q2));
+	viewport->set_positional_shadow_atlas_quadrant_subdiv(3, Viewport::PositionalShadowAtlasQuadrantSubdiv(atlas_q3));
 
 	_update_shrink();
 
@@ -2725,7 +2725,8 @@ static void draw_indicator_bar(Control &p_surface, real_t p_fill, const Ref<Text
 	p_surface.draw_texture(p_icon, icon_pos, p_color);
 
 	// Draw text below the bar (for speed/zoom information).
-	p_surface.draw_string(p_font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), p_text, HORIZONTAL_ALIGNMENT_LEFT, -1.f, p_font_size, p_color, Math::round(2 * EDSCALE), Color(0, 0, 0));
+	p_surface.draw_string_outline(p_font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), p_text, HORIZONTAL_ALIGNMENT_LEFT, -1.f, p_font_size, Math::round(2 * EDSCALE), Color(0, 0, 0));
+	p_surface.draw_string(p_font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), p_text, HORIZONTAL_ALIGNMENT_LEFT, -1.f, p_font_size, p_color);
 }
 
 void Node3DEditorViewport::_draw() {
@@ -4702,7 +4703,7 @@ Node3DEditorViewport::Node3DEditorViewport(Node3DEditor *p_spatial_editor, int p
 	frame_time_gradient->add_point(0.5, Color());
 
 	top_right_vbox = memnew(VBoxContainer);
-	top_right_vbox->set_anchors_and_offsets_preset(PRESET_TOP_RIGHT, PRESET_MODE_MINSIZE, 2.0 * EDSCALE);
+	top_right_vbox->set_anchors_and_offsets_preset(PRESET_TOP_RIGHT, PRESET_MODE_MINSIZE, 10.0 * EDSCALE);
 	top_right_vbox->set_h_grow_direction(GROW_DIRECTION_BEGIN);
 	// Make sure frame time labels don't touch the viewport's edge.
 	top_right_vbox->set_custom_minimum_size(Size2(100, 0) * EDSCALE);

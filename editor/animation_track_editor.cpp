@@ -1577,10 +1577,10 @@ void AnimationTimelineEdit::_notification(int p_what) {
 			int decimals = 2;
 			bool step_found = false;
 
-			const float period_width = font->get_char_size('.', 0, font_size).width;
-			float max_digit_width = font->get_char_size('0', 0, font_size).width;
+			const float period_width = font->get_char_size('.', font_size).width;
+			float max_digit_width = font->get_char_size('0', font_size).width;
 			for (int i = 1; i <= 9; i++) {
-				const float digit_width = font->get_char_size('0' + i, 0, font_size).width;
+				const float digit_width = font->get_char_size('0' + i, font_size).width;
 				max_digit_width = MAX(digit_width, max_digit_width);
 			}
 			const int max_sc = int(Math::ceil(zoomw / scale));
@@ -1628,7 +1628,7 @@ void AnimationTimelineEdit::_notification(int p_what) {
 							draw_line(Point2(get_name_limit() + i, 0), Point2(get_name_limit() + i, h), linecolor, Math::round(EDSCALE));
 
 							draw_string(font, Point2(get_name_limit() + i + 3 * EDSCALE, (h - font->get_height(font_size)) / 2 + font->get_ascent(font_size)).floor(), itos(frame), HORIZONTAL_ALIGNMENT_LEFT, zoomw - i, font_size, sub ? color_time_dec : color_time_sec);
-							prev_frame_ofs = i + font->get_string_size(itos(frame), font_size).x + 5 * EDSCALE;
+							prev_frame_ofs = i + font->get_string_size(itos(frame), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 5 * EDSCALE;
 						}
 					}
 				}
@@ -3696,7 +3696,7 @@ void AnimationTrackEditor::commit_insert_queue() {
 		insert_confirm_bezier->set_visible(all_bezier);
 		insert_confirm_reset->set_visible(reset_allowed);
 
-		insert_confirm->get_ok_button()->set_text(TTR("Create"));
+		insert_confirm->set_ok_button_text(TTR("Create"));
 		insert_confirm->popup_centered();
 	} else {
 		_insert_track(reset_allowed && EDITOR_GET("editors/animation/default_create_reset_tracks"), all_bezier && EDITOR_GET("editors/animation/default_create_bezier_tracks"));
@@ -6473,7 +6473,7 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	optimize_max_angle->set_step(0.1);
 	optimize_max_angle->set_value(22);
 
-	optimize_dialog->get_ok_button()->set_text(TTR("Optimize"));
+	optimize_dialog->set_ok_button_text(TTR("Optimize"));
 	optimize_dialog->connect("confirmed", callable_mp(this, &AnimationTrackEditor::_edit_menu_pressed), varray(EDIT_OPTIMIZE_ANIMATION_CONFIRM));
 
 	//
@@ -6498,7 +6498,7 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	cleanup_vb->add_child(cleanup_all);
 
 	cleanup_dialog->set_title(TTR("Clean-Up Animation(s) (NO UNDO!)"));
-	cleanup_dialog->get_ok_button()->set_text(TTR("Clean-Up"));
+	cleanup_dialog->set_ok_button_text(TTR("Clean-Up"));
 
 	cleanup_dialog->connect("confirmed", callable_mp(this, &AnimationTrackEditor::_edit_menu_pressed), varray(EDIT_CLEAN_UP_ANIMATION_CONFIRM));
 
@@ -6518,7 +6518,7 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	track_copy_dialog = memnew(ConfirmationDialog);
 	add_child(track_copy_dialog);
 	track_copy_dialog->set_title(TTR("Select Tracks to Copy"));
-	track_copy_dialog->get_ok_button()->set_text(TTR("Copy"));
+	track_copy_dialog->set_ok_button_text(TTR("Copy"));
 
 	VBoxContainer *track_vbox = memnew(VBoxContainer);
 	track_copy_dialog->add_child(track_vbox);

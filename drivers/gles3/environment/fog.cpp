@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  font_editor_plugin.h                                                 */
+/*  fog.cpp                                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,50 +28,39 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef FONT_EDITOR_PLUGIN_H
-#define FONT_EDITOR_PLUGIN_H
+#ifdef GLES3_ENABLED
 
-#include "editor/editor_plugin.h"
-#include "scene/resources/font.h"
-#include "scene/resources/text_line.h"
+#include "fog.h"
 
-class FontDataPreview : public Control {
-	GDCLASS(FontDataPreview, Control);
+using namespace GLES3;
 
-protected:
-	void _notification(int p_what);
-	static void _bind_methods();
+/* FOG */
 
-	Ref<TextLine> line;
+RID Fog::fog_volume_allocate() {
+	return RID();
+}
 
-public:
-	virtual Size2 get_minimum_size() const override;
+void Fog::fog_volume_initialize(RID p_rid) {
+}
 
-	void set_data(const Ref<FontData> &p_data);
+void Fog::fog_free(RID p_rid) {
+}
 
-	FontDataPreview();
-};
+void Fog::fog_volume_set_shape(RID p_fog_volume, RS::FogVolumeShape p_shape) {
+}
 
-/*************************************************************************/
+void Fog::fog_volume_set_extents(RID p_fog_volume, const Vector3 &p_extents) {
+}
 
-class EditorInspectorPluginFont : public EditorInspectorPlugin {
-	GDCLASS(EditorInspectorPluginFont, EditorInspectorPlugin);
+void Fog::fog_volume_set_material(RID p_fog_volume, RID p_material) {
+}
 
-public:
-	virtual bool can_handle(Object *p_object) override;
-	virtual void parse_begin(Object *p_object) override;
-	virtual bool parse_property(Object *p_object, const Variant::Type p_type, const String &p_path, const PropertyHint p_hint, const String &p_hint_text, const uint32_t p_usage, const bool p_wide = false) override;
-};
+AABB Fog::fog_volume_get_aabb(RID p_fog_volume) const {
+	return AABB();
+}
 
-/*************************************************************************/
+RS::FogVolumeShape Fog::fog_volume_get_shape(RID p_fog_volume) const {
+	return RS::FOG_VOLUME_SHAPE_BOX;
+}
 
-class FontEditorPlugin : public EditorPlugin {
-	GDCLASS(FontEditorPlugin, EditorPlugin);
-
-public:
-	FontEditorPlugin();
-
-	virtual String get_name() const override { return "Font"; }
-};
-
-#endif // FONT_EDITOR_PLUGIN_H
+#endif // GLES3_ENABLED

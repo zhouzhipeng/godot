@@ -145,7 +145,7 @@ void CustomPropertyEditor::_menu_option(int p_which) {
 
 					file->clear_filters();
 					for (const String &E : valid_extensions) {
-						file->add_filter("*." + E + " ; " + E.to_upper());
+						file->add_filter("*." + E, E.to_upper());
 					}
 
 					file->popup_file_dialog();
@@ -831,11 +831,7 @@ bool CustomPropertyEditor::edit(Object *p_owner, const String &p_name, Variant::
 
 				// get default color picker mode from editor settings
 				int default_color_mode = EDITOR_GET("interface/inspector/default_color_picker_mode");
-				if (default_color_mode == 1) {
-					color_picker->set_hsv_mode(true);
-				} else if (default_color_mode == 2) {
-					color_picker->set_raw_mode(true);
-				}
+				color_picker->set_color_mode((ColorPicker::ColorModeType)default_color_mode);
 
 				int picker_shape = EDITOR_GET("interface/inspector/default_color_picker_shape");
 				color_picker->set_picker_shape((ColorPicker::PickerShapeType)picker_shape);
@@ -1227,7 +1223,7 @@ void CustomPropertyEditor::_action_pressed(int p_which) {
 								filter = "*." + extensions[i];
 							}
 
-							file->add_filter(filter + " ; " + extensions[i].to_upper());
+							file->add_filter(filter, extensions[i].to_upper());
 						}
 					}
 					file->popup_file_dialog();
@@ -1311,7 +1307,7 @@ void CustomPropertyEditor::_action_pressed(int p_which) {
 				ResourceLoader::get_recognized_extensions_for_type(type, &extensions);
 				file->clear_filters();
 				for (const String &E : extensions) {
-					file->add_filter("*." + E + " ; " + E.to_upper());
+					file->add_filter("*." + E, E.to_upper());
 				}
 
 				file->popup_file_dialog();

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  ot_features_plugin.h                                                 */
+/*  fog.h                                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,75 +28,56 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef OT_FEATURES_PLUGIN_H
-#define OT_FEATURES_PLUGIN_H
+#ifndef FOG_RD_H
+#define FOG_RD_H
 
-#include "editor/editor_plugin.h"
-#include "editor/editor_properties.h"
+#include "core/templates/local_vector.h"
+#include "core/templates/rid_owner.h"
+#include "servers/rendering/environment/renderer_fog.h"
+#include "servers/rendering/storage/utilities.h"
 
-/*************************************************************************/
+namespace RendererRD {
 
-class OpenTypeFeaturesEditor : public EditorProperty {
-	GDCLASS(OpenTypeFeaturesEditor, EditorProperty);
-	EditorSpinSlider *spin = nullptr;
-	bool setting = true;
-	void _value_changed(double p_val);
-	Button *button = nullptr;
+class Fog : public RendererFog {
+public:
+	struct FogVolume {
+		RID material;
+		Vector3 extents = Vector3(1, 1, 1);
 
-	void _remove_feature();
+		RS::FogVolumeShape shape = RS::FOG_VOLUME_SHAPE_BOX;
 
-protected:
-	void _notification(int p_what);
-	static void _bind_methods();
+		Dependency dependency;
+	};
+
+private:
+	static Fog *singleton;
+
+	mutable RID_Owner<FogVolume, true> fog_volume_owner;
 
 public:
-	virtual void update_property() override;
-	OpenTypeFeaturesEditor();
+	static Fog *get_singleton() { return singleton; }
+
+	Fog();
+	~Fog();
+
+	/* FOG VOLUMES */
+
+	FogVolume *get_fog_volume(RID p_rid) { return fog_volume_owner.get_or_null(p_rid); };
+	bool owns_fog_volume(RID p_rid) { return fog_volume_owner.owns(p_rid); };
+
+	virtual RID fog_volume_allocate() override;
+	virtual void fog_volume_initialize(RID p_rid) override;
+	virtual void fog_free(RID p_rid) override;
+
+	virtual void fog_volume_set_shape(RID p_fog_volume, RS::FogVolumeShape p_shape) override;
+	virtual void fog_volume_set_extents(RID p_fog_volume, const Vector3 &p_extents) override;
+	virtual void fog_volume_set_material(RID p_fog_volume, RID p_material) override;
+	virtual RS::FogVolumeShape fog_volume_get_shape(RID p_fog_volume) const override;
+	RID fog_volume_get_material(RID p_fog_volume) const;
+	virtual AABB fog_volume_get_aabb(RID p_fog_volume) const override;
+	Vector3 fog_volume_get_extents(RID p_fog_volume) const;
 };
 
-/*************************************************************************/
+} // namespace RendererRD
 
-class OpenTypeFeaturesAdd : public Button {
-	GDCLASS(OpenTypeFeaturesAdd, Button);
-
-	Object *edited_object = nullptr;
-	PopupMenu *menu = nullptr;
-	PopupMenu *menu_ss = nullptr;
-	PopupMenu *menu_cv = nullptr;
-	PopupMenu *menu_cu = nullptr;
-
-	void _add_feature(int p_option);
-	void _features_menu();
-
-protected:
-	void _notification(int p_what);
-	static void _bind_methods();
-
-public:
-	void setup(Object *p_object);
-
-	OpenTypeFeaturesAdd();
-};
-
-/*************************************************************************/
-
-class EditorInspectorPluginOpenTypeFeatures : public EditorInspectorPlugin {
-	GDCLASS(EditorInspectorPluginOpenTypeFeatures, EditorInspectorPlugin);
-
-public:
-	virtual bool can_handle(Object *p_object) override;
-	virtual bool parse_property(Object *p_object, const Variant::Type p_type, const String &p_path, const PropertyHint p_hint, const String &p_hint_text, const uint32_t p_usage, const bool p_wide = false) override;
-};
-
-/*************************************************************************/
-
-class OpenTypeFeaturesEditorPlugin : public EditorPlugin {
-	GDCLASS(OpenTypeFeaturesEditorPlugin, EditorPlugin);
-
-public:
-	OpenTypeFeaturesEditorPlugin();
-
-	virtual String get_name() const override { return "OpenTypeFeatures"; }
-};
-
-#endif // OT_FEATURES_PLUGIN_H
+#endif // !FOG_RD_H

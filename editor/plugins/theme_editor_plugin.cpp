@@ -1883,7 +1883,7 @@ void ThemeItemEditorDialog::set_edited_theme(const Ref<Theme> &p_theme) {
 
 ThemeItemEditorDialog::ThemeItemEditorDialog(ThemeTypeEditor *p_theme_type_editor) {
 	set_title(TTR("Manage Theme Items"));
-	get_ok_button()->set_text(TTR("Close"));
+	set_ok_button_text(TTR("Close"));
 	set_hide_on_ok(false); // Closing may require a confirmation in some cases.
 
 	theme_type_editor = p_theme_type_editor;
@@ -2080,7 +2080,7 @@ ThemeItemEditorDialog::ThemeItemEditorDialog(ThemeTypeEditor *p_theme_type_edito
 	List<String> ext;
 	ResourceLoader::get_recognized_extensions_for_type("Theme", &ext);
 	for (const String &E : ext) {
-		import_another_theme_dialog->add_filter(vformat("*.%s; %s", E, TTR("Theme Resource")));
+		import_another_theme_dialog->add_filter("*." + E, TTR("Theme Resource"));
 	}
 	import_another_file_hb->add_child(import_another_theme_dialog);
 	import_another_theme_dialog->connect("file_selected", callable_mp(this, &ThemeItemEditorDialog::_select_another_theme_cbk));
@@ -2733,7 +2733,7 @@ void ThemeTypeEditor::_list_type_selected(int p_index) {
 void ThemeTypeEditor::_add_type_button_cbk() {
 	add_type_mode = ADD_THEME_TYPE;
 	add_type_dialog->set_title(TTR("Add Item Type"));
-	add_type_dialog->get_ok_button()->set_text(TTR("Add Type"));
+	add_type_dialog->set_ok_button_text(TTR("Add Type"));
 	add_type_dialog->set_include_own_types(false);
 	add_type_dialog->popup_centered(Size2(560, 420) * EDSCALE);
 }
@@ -2930,10 +2930,6 @@ void ThemeTypeEditor::_item_remove_cbk(int p_data_type, String p_item_name) {
 			} else {
 				ur->add_undo_method(*edited_theme, "set_font", p_item_name, edited_type, Ref<Font>());
 			}
-		} break;
-		case Theme::DATA_TYPE_FONT_SIZE: {
-			ur->add_do_method(*edited_theme, "clear_font_size", p_item_name, edited_type);
-			ur->add_undo_method(*edited_theme, "set_font_size", p_item_name, edited_type, edited_theme->get_font_size(p_item_name, edited_type));
 		} break;
 		case Theme::DATA_TYPE_ICON: {
 			ur->add_do_method(*edited_theme, "clear_icon", p_item_name, edited_type);
@@ -3273,7 +3269,7 @@ void ThemeTypeEditor::_type_variation_changed(const String p_value) {
 void ThemeTypeEditor::_add_type_variation_cbk() {
 	add_type_mode = ADD_VARIATION_BASE;
 	add_type_dialog->set_title(TTR("Set Variation Base Type"));
-	add_type_dialog->get_ok_button()->set_text(TTR("Set Base Type"));
+	add_type_dialog->set_ok_button_text(TTR("Set Base Type"));
 	add_type_dialog->set_include_own_types(true);
 	add_type_dialog->popup_centered(Size2(560, 420) * EDSCALE);
 }
@@ -3667,7 +3663,7 @@ ThemeEditor::ThemeEditor() {
 	List<String> ext;
 	ResourceLoader::get_recognized_extensions_for_type("PackedScene", &ext);
 	for (const String &E : ext) {
-		preview_scene_dialog->add_filter(vformat("*.%s; %s", E, TTR("Scene")));
+		preview_scene_dialog->add_filter("*." + E, TTR("Scene"));
 	}
 	main_hs->add_child(preview_scene_dialog);
 	preview_scene_dialog->connect("file_selected", callable_mp(this, &ThemeEditor::_preview_scene_dialog_cbk));
@@ -3698,7 +3694,7 @@ bool ThemeEditorPlugin::handles(Object *p_node) const {
 
 	// If we are editing a theme already and this particular resource happens to belong to it,
 	// then we just keep editing it, despite not being able to directly handle it.
-	// This only goes one layer deep, but if required this can be extended to support, say, FontData inside of Font.
+	// This only goes one layer deep, but if required this can be extended to support, say, Font inside of Font.
 	bool belongs_to_theme = false;
 
 	if (Object::cast_to<Font>(p_node)) {

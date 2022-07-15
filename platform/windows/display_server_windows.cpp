@@ -656,7 +656,9 @@ void DisplayServerWindows::delete_sub_window(WindowID p_window) {
 
 void DisplayServerWindows::gl_window_make_current(DisplayServer::WindowID p_window_id) {
 #if defined(GLES3_ENABLED)
-	gl_manager->window_make_current(p_window_id);
+	if (gl_manager) {
+		gl_manager->window_make_current(p_window_id);
+	}
 #endif
 }
 
@@ -2380,7 +2382,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		case WM_MOUSELEAVE: {
 			old_invalid = true;
-			outside = true;
+			windows[window_id].mouse_outside = true;
 
 			_send_window_event(windows[window_id], WINDOW_EVENT_MOUSE_EXIT);
 
@@ -2610,7 +2612,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				}
 			}
 
-			if (outside) {
+			if (windows[window_id].mouse_outside) {
 				// Mouse enter.
 
 				if (mouse_mode != MOUSE_MODE_CAPTURED) {
@@ -2620,7 +2622,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				CursorShape c = cursor_shape;
 				cursor_shape = CURSOR_MAX;
 				cursor_set_shape(c);
-				outside = false;
+				windows[window_id].mouse_outside = false;
 
 				// Once-off notification, must call again.
 				track_mouse_leave_event(hWnd);
@@ -2711,7 +2713,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				}
 			}
 
-			if (outside) {
+			if (windows[window_id].mouse_outside) {
 				// Mouse enter.
 
 				if (mouse_mode != MOUSE_MODE_CAPTURED) {
@@ -2721,7 +2723,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				CursorShape c = cursor_shape;
 				cursor_shape = CURSOR_MAX;
 				cursor_set_shape(c);
-				outside = false;
+				windows[window_id].mouse_outside = false;
 
 				// Once-off notification, must call again.
 				track_mouse_leave_event(hWnd);
@@ -3605,8 +3607,6 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	pressrc = 0;
 	old_invalid = true;
 	mouse_mode = MOUSE_MODE_VISIBLE;
-
-	outside = true;
 
 	rendering_driver = p_rendering_driver;
 
