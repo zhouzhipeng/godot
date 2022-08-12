@@ -296,7 +296,7 @@ void PathFollow3D::_update_transform(bool p_update_xyz_rot) {
 			}
 		}
 
-		t.translate(Vector3(h_offset, v_offset, 0));
+		t.translate_local(Vector3(h_offset, v_offset, 0));
 	} else {
 		t.origin = pos + Vector3(h_offset, v_offset, 0);
 	}
@@ -397,6 +397,7 @@ void PathFollow3D::_bind_methods() {
 }
 
 void PathFollow3D::set_offset(real_t p_offset) {
+	ERR_FAIL_COND(!isfinite(p_offset));
 	prev_offset = offset;
 	offset = p_offset;
 

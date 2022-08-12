@@ -32,6 +32,7 @@
 
 #include "core/os/keyboard.h"
 #include "editor/editor_node.h"
+#include "editor/editor_settings.h"
 
 void TextEditor::add_syntax_highlighter(Ref<EditorSyntaxHighlighter> p_highlighter) {
 	ERR_FAIL_COND(p_highlighter.is_null());
@@ -275,7 +276,7 @@ void TextEditor::update_settings() {
 void TextEditor::set_tooltip_request_func(const Callable &p_toolip_callback) {
 	Variant args[1] = { this };
 	const Variant *argp[] = { &args[0] };
-	code_editor->get_text_editor()->set_tooltip_request_func(p_toolip_callback.bind(argp, 1));
+	code_editor->get_text_editor()->set_tooltip_request_func(p_toolip_callback.bindp(argp, 1));
 }
 
 Control *TextEditor::get_edit_menu() {
@@ -524,7 +525,7 @@ TextEditor::TextEditor() {
 	code_editor->add_theme_constant_override("separation", 0);
 	code_editor->connect("load_theme_settings", callable_mp(this, &TextEditor::_load_theme_settings));
 	code_editor->connect("validate_script", callable_mp(this, &TextEditor::_validate_script));
-	code_editor->set_anchors_and_offsets_preset(Control::PRESET_WIDE);
+	code_editor->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 	code_editor->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	code_editor->show_toggle_scripts_button();
 

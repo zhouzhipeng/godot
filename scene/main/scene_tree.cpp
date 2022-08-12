@@ -34,9 +34,9 @@
 #include "core/debugger/engine_debugger.h"
 #include "core/input/input.h"
 #include "core/io/dir_access.h"
+#include "core/io/image_loader.h"
 #include "core/io/marshalls.h"
 #include "core/io/resource_loader.h"
-#include "core/multiplayer/multiplayer_api.h"
 #include "core/object/message_queue.h"
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
@@ -44,6 +44,7 @@
 #include "node.h"
 #include "scene/animation/tween.h"
 #include "scene/debugger/scene_debugger.h"
+#include "scene/main/multiplayer_api.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/font.h"
 #include "scene/resources/material.h"
@@ -1212,19 +1213,17 @@ void SceneTree::set_multiplayer(Ref<MultiplayerAPI> p_multiplayer, const NodePat
 	if (p_root_path.is_empty()) {
 		ERR_FAIL_COND(!p_multiplayer.is_valid());
 		if (multiplayer.is_valid()) {
-			multiplayer->set_root_path(NodePath());
+			multiplayer->object_configuration_remove(nullptr, NodePath("/" + root->get_name()));
 		}
 		multiplayer = p_multiplayer;
-		multiplayer->set_root_path("/" + root->get_name());
+		multiplayer->object_configuration_add(nullptr, NodePath("/" + root->get_name()));
 	} else {
+		if (custom_multiplayers.has(p_root_path)) {
+			custom_multiplayers[p_root_path]->object_configuration_remove(nullptr, p_root_path);
+		}
 		if (p_multiplayer.is_valid()) {
 			custom_multiplayers[p_root_path] = p_multiplayer;
-			p_multiplayer->set_root_path(p_root_path);
-		} else {
-			if (custom_multiplayers.has(p_root_path)) {
-				custom_multiplayers[p_root_path]->set_root_path(NodePath());
-				custom_multiplayers.erase(p_root_path);
-			}
+			p_multiplayer->object_configuration_add(nullptr, p_root_path);
 		}
 	}
 }
@@ -1414,7 +1413,7 @@ SceneTree::SceneTree() {
 #endif // _3D_DISABLED
 
 	// Initialize network state.
-	set_multiplayer(Ref<MultiplayerAPI>(memnew(MultiplayerAPI)));
+	set_multiplayer(MultiplayerAPI::create_default_interface());
 
 	root->set_as_audio_listener_2d(true);
 	current_scene = nullptr;
@@ -1445,6 +1444,29 @@ SceneTree::SceneTree() {
 
 	bool snap_2d_vertices = GLOBAL_DEF("rendering/2d/snap/snap_2d_vertices_to_pixel", false);
 	root->set_snap_2d_vertices_to_pixel(snap_2d_vertices);
+
+	// We setup VRS for the main viewport here, in the editor this will have little effect.
+	const int vrs_mode = GLOBAL_DEF("rendering/vrs/mode", 0);
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/vrs/mode", PropertyInfo(Variant::INT, "rendering/vrs/mode", PROPERTY_HINT_ENUM, String::utf8("Disabled,Texture,XR")));
+	root->set_vrs_mode(Viewport::VRSMode(vrs_mode));
+	const String vrs_texture_path = String(GLOBAL_DEF("rendering/vrs/texture", String())).strip_edges();
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/vrs/texture",
+			PropertyInfo(Variant::STRING,
+					"rendering/vrs/texture",
+					PROPERTY_HINT_FILE, "*.png"));
+	if (vrs_mode == 1 && !vrs_texture_path.is_empty()) {
+		Ref<Image> vrs_image;
+		vrs_image.instantiate();
+		Error load_err = ImageLoader::load_image(vrs_texture_path, vrs_image);
+		if (load_err) {
+			ERR_PRINT("Non-existing or invalid VRS texture at '" + vrs_texture_path + "'.");
+		} else {
+			Ref<ImageTexture> vrs_texture;
+			vrs_texture.instantiate();
+			vrs_texture->create_from_image(vrs_image);
+			root->set_vrs_texture(vrs_texture);
+		}
+	}
 
 	int shadowmap_size = GLOBAL_DEF("rendering/shadows/positional_shadow/atlas_size", 4096);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/shadows/positional_shadow/atlas_size", PropertyInfo(Variant::INT, "rendering/shadows/positional_shadow/atlas_size", PROPERTY_HINT_RANGE, "256,16384"));

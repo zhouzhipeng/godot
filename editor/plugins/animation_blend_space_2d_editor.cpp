@@ -38,6 +38,7 @@
 #include "editor/editor_file_dialog.h"
 #include "editor/editor_node.h"
 #include "editor/editor_scale.h"
+#include "editor/editor_settings.h"
 #include "scene/animation/animation_blend_tree.h"
 #include "scene/animation/animation_player.h"
 #include "scene/gui/menu_button.h"
@@ -595,6 +596,7 @@ void AnimationNodeBlendSpace2DEditor::_update_space() {
 
 	auto_triangles->set_pressed(blend_space->get_auto_triangles());
 
+	sync->set_pressed(blend_space->is_using_sync());
 	interpolation->select(blend_space->get_blend_mode());
 
 	max_x_value->set_value(blend_space->get_max_space().x);
@@ -620,13 +622,15 @@ void AnimationNodeBlendSpace2DEditor::_config_changed(double) {
 	}
 
 	updating = true;
-	undo_redo->create_action(TTR("Change BlendSpace2D Limits"));
+	undo_redo->create_action(TTR("Change BlendSpace2D Config"));
 	undo_redo->add_do_method(blend_space.ptr(), "set_max_space", Vector2(max_x_value->get_value(), max_y_value->get_value()));
 	undo_redo->add_undo_method(blend_space.ptr(), "set_max_space", blend_space->get_max_space());
 	undo_redo->add_do_method(blend_space.ptr(), "set_min_space", Vector2(min_x_value->get_value(), min_y_value->get_value()));
 	undo_redo->add_undo_method(blend_space.ptr(), "set_min_space", blend_space->get_min_space());
 	undo_redo->add_do_method(blend_space.ptr(), "set_snap", Vector2(snap_x->get_value(), snap_y->get_value()));
 	undo_redo->add_undo_method(blend_space.ptr(), "set_snap", blend_space->get_snap());
+	undo_redo->add_do_method(blend_space.ptr(), "set_use_sync", sync->is_pressed());
+	undo_redo->add_undo_method(blend_space.ptr(), "set_use_sync", blend_space->is_using_sync());
 	undo_redo->add_do_method(blend_space.ptr(), "set_blend_mode", interpolation->get_selected());
 	undo_redo->add_undo_method(blend_space.ptr(), "set_blend_mode", blend_space->get_blend_mode());
 	undo_redo->add_do_method(this, "_update_space");
@@ -829,7 +833,7 @@ AnimationNodeBlendSpace2DEditor::AnimationNodeBlendSpace2DEditor() {
 	top_hb->add_child(tool_blend);
 	tool_blend->set_pressed(true);
 	tool_blend->set_tooltip(TTR("Set the blending position within the space"));
-	tool_blend->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch), varray(3));
+	tool_blend->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch).bind(3));
 
 	tool_select = memnew(Button);
 	tool_select->set_flat(true);
@@ -837,7 +841,7 @@ AnimationNodeBlendSpace2DEditor::AnimationNodeBlendSpace2DEditor() {
 	tool_select->set_button_group(bg);
 	top_hb->add_child(tool_select);
 	tool_select->set_tooltip(TTR("Select and move points, create points with RMB."));
-	tool_select->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch), varray(0));
+	tool_select->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch).bind(0));
 
 	tool_create = memnew(Button);
 	tool_create->set_flat(true);
@@ -845,7 +849,7 @@ AnimationNodeBlendSpace2DEditor::AnimationNodeBlendSpace2DEditor() {
 	tool_create->set_button_group(bg);
 	top_hb->add_child(tool_create);
 	tool_create->set_tooltip(TTR("Create points."));
-	tool_create->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch), varray(1));
+	tool_create->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch).bind(1));
 
 	tool_triangle = memnew(Button);
 	tool_triangle->set_flat(true);
@@ -853,7 +857,7 @@ AnimationNodeBlendSpace2DEditor::AnimationNodeBlendSpace2DEditor() {
 	tool_triangle->set_button_group(bg);
 	top_hb->add_child(tool_triangle);
 	tool_triangle->set_tooltip(TTR("Create triangles by connecting points."));
-	tool_triangle->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch), varray(2));
+	tool_triangle->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_tool_switch).bind(2));
 
 	tool_erase_sep = memnew(VSeparator);
 	top_hb->add_child(tool_erase_sep);
@@ -899,6 +903,13 @@ AnimationNodeBlendSpace2DEditor::AnimationNodeBlendSpace2DEditor() {
 
 	top_hb->add_child(memnew(VSeparator));
 
+	top_hb->add_child(memnew(Label(TTR("Sync:"))));
+	sync = memnew(CheckBox);
+	top_hb->add_child(sync);
+	sync->connect("toggled", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_config_changed));
+
+	top_hb->add_child(memnew(VSeparator));
+
 	top_hb->add_child(memnew(Label(TTR("Blend:"))));
 	interpolation = memnew(OptionButton);
 	top_hb->add_child(interpolation);
@@ -923,7 +934,7 @@ AnimationNodeBlendSpace2DEditor::AnimationNodeBlendSpace2DEditor() {
 	open_editor = memnew(Button);
 	edit_hb->add_child(open_editor);
 	open_editor->set_text(TTR("Open Editor"));
-	open_editor->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_open_editor), varray(), CONNECT_DEFERRED);
+	open_editor->connect("pressed", callable_mp(this, &AnimationNodeBlendSpace2DEditor::_open_editor), CONNECT_DEFERRED);
 	edit_hb->hide();
 	open_editor->hide();
 

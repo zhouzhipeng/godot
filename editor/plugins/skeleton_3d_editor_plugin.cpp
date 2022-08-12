@@ -42,6 +42,7 @@
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/3d/physics_body_3d.h"
 #include "scene/resources/capsule_shape_3d.h"
+#include "scene/resources/skeleton_profile.h"
 #include "scene/resources/sphere_shape_3d.h"
 #include "scene/resources/surface_tool.h"
 
@@ -156,7 +157,7 @@ void BoneTransformEditor::_property_keyed(const String &p_path, bool p_advance) 
 	if (split.size() == 3 && split[0] == "bones") {
 		int bone_idx = split[1].to_int();
 		if (split[2] == "position") {
-			te->insert_transform_key(skeleton, skeleton->get_bone_name(bone_idx), Animation::TYPE_POSITION_3D, skeleton->get(p_path));
+			te->insert_transform_key(skeleton, skeleton->get_bone_name(bone_idx), Animation::TYPE_POSITION_3D, (Vector3)skeleton->get(p_path) / skeleton->get_motion_scale());
 		}
 		if (split[2] == "rotation") {
 			te->insert_transform_key(skeleton, skeleton->get_bone_name(bone_idx), Animation::TYPE_ROTATION_3D, skeleton->get(p_path));
@@ -250,6 +251,10 @@ void Skeleton3DEditor::_on_click_skeleton_option(int p_skeleton_option) {
 			create_physical_skeleton();
 			break;
 		}
+		case SKELETON_OPTION_EXPORT_SKELETON_PROFILE: {
+			export_skeleton_profile();
+			break;
+		}
 	}
 }
 
@@ -314,7 +319,7 @@ void Skeleton3DEditor::insert_keys(const bool p_all_bones) {
 		}
 
 		if (pos_enabled && (p_all_bones || te->has_track(skeleton, name, Animation::TYPE_POSITION_3D))) {
-			te->insert_transform_key(skeleton, name, Animation::TYPE_POSITION_3D, skeleton->get_bone_pose_position(i));
+			te->insert_transform_key(skeleton, name, Animation::TYPE_POSITION_3D, skeleton->get_bone_pose_position(i) / skeleton->get_motion_scale());
 		}
 		if (rot_enabled && (p_all_bones || te->has_track(skeleton, name, Animation::TYPE_ROTATION_3D))) {
 			te->insert_transform_key(skeleton, name, Animation::TYPE_ROTATION_3D, skeleton->get_bone_pose_rotation(i));
@@ -449,6 +454,73 @@ PhysicalBone3D *Skeleton3DEditor::create_physical_bone(int bone_id, int bone_chi
 	physical_bone->set_body_offset(body_transform);
 	physical_bone->set_joint_offset(joint_transform);
 	return physical_bone;
+}
+
+void Skeleton3DEditor::export_skeleton_profile() {
+	file_dialog->set_file_mode(EditorFileDialog::FILE_MODE_SAVE_FILE);
+	file_dialog->set_title(TTR("Export Skeleton Profile As..."));
+
+	List<String> exts;
+	ResourceLoader::get_recognized_extensions_for_type("SkeletonProfile", &exts);
+	file_dialog->clear_filters();
+	for (const String &K : exts) {
+		file_dialog->add_filter("*." + K);
+	}
+
+	file_dialog->popup_file_dialog();
+}
+
+void Skeleton3DEditor::_file_selected(const String &p_file) {
+	// Export SkeletonProfile.
+	Ref<SkeletonProfile> sp(memnew(SkeletonProfile));
+
+	// Build SkeletonProfile.
+	sp->set_group_size(1);
+
+	Vector<Vector2> handle_positions;
+	Vector2 position_max;
+	Vector2 position_min;
+
+	int len = skeleton->get_bone_count();
+	sp->set_bone_size(len);
+	for (int i = 0; i < len; i++) {
+		sp->set_bone_name(i, skeleton->get_bone_name(i));
+		int parent = skeleton->get_bone_parent(i);
+		if (parent >= 0) {
+			sp->set_bone_parent(i, skeleton->get_bone_name(parent));
+		}
+		sp->set_reference_pose(i, skeleton->get_bone_rest(i));
+
+		Transform3D grest = skeleton->get_bone_global_rest(i);
+		handle_positions.append(Vector2(grest.origin.x, grest.origin.y));
+		if (i == 0) {
+			position_max = Vector2(grest.origin.x, grest.origin.y);
+			position_min = Vector2(grest.origin.x, grest.origin.y);
+		} else {
+			position_max.x = MAX(grest.origin.x, position_max.x);
+			position_max.y = MAX(grest.origin.y, position_max.y);
+			position_min.x = MIN(grest.origin.x, position_min.x);
+			position_min.y = MIN(grest.origin.y, position_min.y);
+		}
+	}
+
+	// Layout handles provisionaly.
+	Vector2 bound = Vector2(position_max.x - position_min.x, position_max.y - position_min.y);
+	Vector2 center = Vector2((position_max.x + position_min.x) * 0.5, (position_max.y + position_min.y) * 0.5);
+	float nrm = MAX(bound.x, bound.y);
+	if (nrm > 0) {
+		for (int i = 0; i < len; i++) {
+			handle_positions.write[i] = (handle_positions[i] - center) / nrm * 0.9;
+			sp->set_handle_offset(i, Vector2(0.5 + handle_positions[i].x, 0.5 - handle_positions[i].y));
+		}
+	}
+
+	Error err = ResourceSaver::save(sp, p_file);
+
+	if (err != OK) {
+		EditorNode::get_singleton()->show_warning(vformat(TTR("Error saving file: %s"), p_file));
+		return;
+	}
 }
 
 Variant Skeleton3DEditor::get_drag_data_fw(const Point2 &p_point, Control *p_from) {
@@ -631,6 +703,11 @@ void Skeleton3DEditor::create_editors() {
 	Node3DEditor *ne = Node3DEditor::get_singleton();
 	AnimationTrackEditor *te = AnimationPlayerEditor::get_singleton()->get_track_editor();
 
+	// Create File dialog.
+	file_dialog = memnew(EditorFileDialog);
+	file_dialog->connect("file_selected", callable_mp(this, &Skeleton3DEditor::_file_selected));
+	add_child(file_dialog);
+
 	// Create Top Menu Bar.
 	separator = memnew(VSeparator);
 	ne->add_control_to_menu_panel(separator);
@@ -649,6 +726,7 @@ void Skeleton3DEditor::create_editors() {
 	p->add_shortcut(ED_SHORTCUT("skeleton_3d_editor/all_poses_to_rests", TTR("Apply all poses to rests")), SKELETON_OPTION_ALL_POSES_TO_RESTS);
 	p->add_shortcut(ED_SHORTCUT("skeleton_3d_editor/selected_poses_to_rests", TTR("Apply selected poses to rests")), SKELETON_OPTION_SELECTED_POSES_TO_RESTS);
 	p->add_item(TTR("Create physical skeleton"), SKELETON_OPTION_CREATE_PHYSICAL_SKELETON);
+	p->add_item(TTR("Export skeleton profile"), SKELETON_OPTION_EXPORT_SKELETON_PROFILE);
 
 	p->connect("id_pressed", callable_mp(this, &Skeleton3DEditor::_on_click_skeleton_option));
 	set_bone_options_enabled(false);
@@ -704,7 +782,7 @@ void Skeleton3DEditor::create_editors() {
 	key_insert_button = memnew(Button);
 	key_insert_button->set_flat(true);
 	key_insert_button->set_focus_mode(FOCUS_NONE);
-	key_insert_button->connect("pressed", callable_mp(this, &Skeleton3DEditor::insert_keys), varray(false));
+	key_insert_button->connect("pressed", callable_mp(this, &Skeleton3DEditor::insert_keys).bind(false));
 	key_insert_button->set_tooltip(TTR("Insert key of bone poses already exist track."));
 	key_insert_button->set_shortcut(ED_SHORTCUT("skeleton_3d_editor/insert_key_to_existing_tracks", TTR("Insert Key (Existing Tracks)"), Key::INSERT));
 	animation_hb->add_child(key_insert_button);
@@ -712,7 +790,7 @@ void Skeleton3DEditor::create_editors() {
 	key_insert_all_button = memnew(Button);
 	key_insert_all_button->set_flat(true);
 	key_insert_all_button->set_focus_mode(FOCUS_NONE);
-	key_insert_all_button->connect("pressed", callable_mp(this, &Skeleton3DEditor::insert_keys), varray(true));
+	key_insert_all_button->connect("pressed", callable_mp(this, &Skeleton3DEditor::insert_keys).bind(true));
 	key_insert_all_button->set_tooltip(TTR("Insert key of all bone poses."));
 	key_insert_all_button->set_shortcut(ED_SHORTCUT("skeleton_3d_editor/insert_key_of_all_bones", TTR("Insert Key (All Bones)"), KeyModifierMask::CMD + Key::INSERT));
 	animation_hb->add_child(key_insert_all_button);
@@ -758,7 +836,7 @@ void Skeleton3DEditor::_notification(int p_what) {
 			key_scale_button->set_icon(get_theme_icon(SNAME("KeyScale"), SNAME("EditorIcons")));
 			key_insert_button->set_icon(get_theme_icon(SNAME("Key"), SNAME("EditorIcons")));
 			key_insert_all_button->set_icon(get_theme_icon(SNAME("NewKey"), SNAME("EditorIcons")));
-			get_tree()->connect("node_removed", callable_mp(this, &Skeleton3DEditor::_node_removed), Vector<Variant>(), Object::CONNECT_ONESHOT);
+			get_tree()->connect("node_removed", callable_mp(this, &Skeleton3DEditor::_node_removed), Object::CONNECT_ONESHOT);
 			break;
 		}
 		case NOTIFICATION_ENTER_TREE: {
@@ -843,8 +921,8 @@ void fragment() {
 )");
 	handle_material->set_shader(handle_shader);
 	Ref<Texture2D> handle = EditorNode::get_singleton()->get_gui_base()->get_theme_icon(SNAME("EditorBoneHandle"), SNAME("EditorIcons"));
-	handle_material->set_shader_param("point_size", handle->get_width());
-	handle_material->set_shader_param("texture_albedo", handle);
+	handle_material->set_shader_uniform("point_size", handle->get_width());
+	handle_material->set_shader_uniform("texture_albedo", handle);
 
 	handles_mesh_instance = memnew(MeshInstance3D);
 	handles_mesh_instance->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);

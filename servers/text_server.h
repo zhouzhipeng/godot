@@ -79,12 +79,12 @@ public:
 		AUTOWRAP_WORD_SMART
 	};
 
-	enum LineBreakFlag { // LineBreakFlag can be passed in the same value as the JustificationFlag, do not use the same values.
+	enum LineBreakFlag {
 		BREAK_NONE = 0,
-		BREAK_MANDATORY = 1 << 5,
-		BREAK_WORD_BOUND = 1 << 6,
-		BREAK_GRAPHEME_BOUND = 1 << 7,
-		BREAK_WORD_BOUND_ADAPTIVE = 1 << 6 | 1 << 8,
+		BREAK_MANDATORY = 1 << 0,
+		BREAK_WORD_BOUND = 1 << 1,
+		BREAK_GRAPHEME_BOUND = 1 << 2,
+		BREAK_ADAPTIVE = 1 << 3,
 	};
 
 	enum OverrunBehavior {
@@ -116,6 +116,7 @@ public:
 		GRAPHEME_IS_PUNCTUATION = 1 << 8, // Punctuation, except underscore (can be used as word break, but not line break or justifiction).
 		GRAPHEME_IS_UNDERSCORE = 1 << 9, // Underscore (can be used as word break).
 		GRAPHEME_IS_CONNECTED = 1 << 10, // Connected to previous grapheme.
+		GRAPHEME_IS_SAFE_TO_INSERT_TATWEEL = 1 << 11, // It is safe to insert a U+0640 before this grapheme for elongation.
 	};
 
 	enum Hinting {
@@ -148,6 +149,8 @@ public:
 		FEATURE_FONT_VARIABLE = 1 << 10,
 		FEATURE_CONTEXT_SENSITIVE_CASE_CONVERSION = 1 << 11,
 		FEATURE_USE_SUPPORT_DATA = 1 << 12,
+		FEATURE_UNICODE_IDENTIFIERS = 1 << 13,
+		FEATURE_UNICODE_SECURITY = 1 << 14,
 	};
 
 	enum ContourPointTag {
@@ -218,8 +221,8 @@ public:
 
 	virtual int64_t font_get_face_count(const RID &p_font_rid) const = 0;
 
-	virtual void font_set_style(const RID &p_font_rid, int64_t /*FontStyle*/ p_style) = 0;
-	virtual int64_t /*FontStyle*/ font_get_style(const RID &p_font_rid) const = 0;
+	virtual void font_set_style(const RID &p_font_rid, BitField<FontStyle> p_style) = 0;
+	virtual BitField<FontStyle> font_get_style(const RID &p_font_rid) const = 0;
 
 	virtual void font_set_name(const RID &p_font_rid, const String &p_name) = 0;
 	virtual String font_get_name(const RID &p_font_rid) const = 0;
@@ -398,7 +401,7 @@ public:
 	virtual RID shaped_text_substr(const RID &p_shaped, int64_t p_start, int64_t p_length) const = 0; // Copy shaped substring (e.g. line break) without reshaping, but correctly reordered, preservers range.
 	virtual RID shaped_text_get_parent(const RID &p_shaped) const = 0;
 
-	virtual double shaped_text_fit_to_width(const RID &p_shaped, double p_width, int64_t /*JustificationFlag*/ p_jst_flags = JUSTIFICATION_WORD_BOUND | JUSTIFICATION_KASHIDA) = 0;
+	virtual double shaped_text_fit_to_width(const RID &p_shaped, double p_width, BitField<TextServer::JustificationFlag> p_jst_flags = JUSTIFICATION_WORD_BOUND | JUSTIFICATION_KASHIDA) = 0;
 	virtual double shaped_text_tab_align(const RID &p_shaped, const PackedFloat32Array &p_tab_stops) = 0;
 
 	virtual bool shaped_text_shape(const RID &p_shaped) = 0;
@@ -415,9 +418,9 @@ public:
 
 	virtual Vector2i shaped_text_get_range(const RID &p_shaped) const = 0;
 
-	virtual PackedInt32Array shaped_text_get_line_breaks_adv(const RID &p_shaped, const PackedFloat32Array &p_width, int64_t p_start = 0, bool p_once = true, int64_t /*TextBreakFlag*/ p_break_flags = BREAK_MANDATORY | BREAK_WORD_BOUND) const;
-	virtual PackedInt32Array shaped_text_get_line_breaks(const RID &p_shaped, double p_width, int64_t p_start = 0, int64_t /*TextBreakFlag*/ p_break_flags = BREAK_MANDATORY | BREAK_WORD_BOUND) const;
-	virtual PackedInt32Array shaped_text_get_word_breaks(const RID &p_shaped, int64_t p_grapheme_flags = GRAPHEME_IS_SPACE | GRAPHEME_IS_PUNCTUATION) const;
+	virtual PackedInt32Array shaped_text_get_line_breaks_adv(const RID &p_shaped, const PackedFloat32Array &p_width, int64_t p_start = 0, bool p_once = true, BitField<TextServer::LineBreakFlag> p_break_flags = BREAK_MANDATORY | BREAK_WORD_BOUND) const;
+	virtual PackedInt32Array shaped_text_get_line_breaks(const RID &p_shaped, double p_width, int64_t p_start = 0, BitField<TextServer::LineBreakFlag> p_break_flags = BREAK_MANDATORY | BREAK_WORD_BOUND) const;
+	virtual PackedInt32Array shaped_text_get_word_breaks(const RID &p_shaped, BitField<TextServer::GraphemeFlag> p_grapheme_flags = GRAPHEME_IS_SPACE | GRAPHEME_IS_PUNCTUATION) const;
 
 	virtual int64_t shaped_text_get_trim_pos(const RID &p_shaped) const = 0;
 	virtual int64_t shaped_text_get_ellipsis_pos(const RID &p_shaped) const = 0;
@@ -425,7 +428,7 @@ public:
 	Array _shaped_text_get_ellipsis_glyphs_wrapper(const RID &p_shaped) const;
 	virtual int64_t shaped_text_get_ellipsis_glyph_count(const RID &p_shaped) const = 0;
 
-	virtual void shaped_text_overrun_trim_to_width(const RID &p_shaped, double p_width, int64_t p_trim_flags) = 0;
+	virtual void shaped_text_overrun_trim_to_width(const RID &p_shaped, double p_width, BitField<TextServer::TextOverrunFlag> p_trim_flags) = 0;
 
 	virtual Array shaped_text_get_objects(const RID &p_shaped) const = 0;
 	virtual Rect2 shaped_text_get_object_rect(const RID &p_shaped, const Variant &p_key) const = 0;
@@ -463,7 +466,11 @@ public:
 	// String functions.
 	virtual PackedInt32Array string_get_word_breaks(const String &p_string, const String &p_language = "") const = 0;
 
+	virtual int is_confusable(const String &p_string, const PackedStringArray &p_dict) const { return -1; };
+	virtual bool spoof_check(const String &p_string) const { return false; };
+
 	virtual String strip_diacritics(const String &p_string) const;
+	virtual bool is_valid_identifier(const String &p_string) const;
 
 	// Other string operations.
 	virtual String string_to_upper(const String &p_string, const String &p_language = "") const = 0;
@@ -551,16 +558,16 @@ VARIANT_ENUM_CAST(TextServer::AutowrapMode);
 VARIANT_ENUM_CAST(TextServer::OverrunBehavior);
 VARIANT_ENUM_CAST(TextServer::Direction);
 VARIANT_ENUM_CAST(TextServer::Orientation);
-VARIANT_ENUM_CAST(TextServer::JustificationFlag);
-VARIANT_ENUM_CAST(TextServer::LineBreakFlag);
-VARIANT_ENUM_CAST(TextServer::TextOverrunFlag);
-VARIANT_ENUM_CAST(TextServer::GraphemeFlag);
+VARIANT_BITFIELD_CAST(TextServer::JustificationFlag);
+VARIANT_BITFIELD_CAST(TextServer::LineBreakFlag);
+VARIANT_BITFIELD_CAST(TextServer::TextOverrunFlag);
+VARIANT_BITFIELD_CAST(TextServer::GraphemeFlag);
 VARIANT_ENUM_CAST(TextServer::Hinting);
 VARIANT_ENUM_CAST(TextServer::SubpixelPositioning);
 VARIANT_ENUM_CAST(TextServer::Feature);
 VARIANT_ENUM_CAST(TextServer::ContourPointTag);
 VARIANT_ENUM_CAST(TextServer::SpacingType);
-VARIANT_ENUM_CAST(TextServer::FontStyle);
+VARIANT_BITFIELD_CAST(TextServer::FontStyle);
 VARIANT_ENUM_CAST(TextServer::StructuredTextParser);
 
 GDVIRTUAL_NATIVE_PTR(Glyph);

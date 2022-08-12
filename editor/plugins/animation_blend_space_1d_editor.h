@@ -33,11 +33,11 @@
 
 #include "editor/editor_plugin.h"
 #include "editor/plugins/animation_tree_editor_plugin.h"
-#include "editor/property_editor.h"
 #include "scene/animation/animation_blend_space_1d.h"
 #include "scene/gui/button.h"
 #include "scene/gui/graph_edit.h"
 #include "scene/gui/popup.h"
+#include "scene/gui/separator.h"
 #include "scene/gui/tree.h"
 
 class AnimationNodeBlendSpace1DEditor : public AnimationTreeNodeEditorPlugin {
@@ -60,6 +60,8 @@ class AnimationNodeBlendSpace1DEditor : public AnimationTreeNodeEditorPlugin {
 	LineEdit *label_value = nullptr;
 	SpinBox *max_value = nullptr;
 	SpinBox *min_value = nullptr;
+
+	CheckBox *sync = nullptr;
 
 	HBoxContainer *edit_hb = nullptr;
 	SpinBox *edit_value = nullptr;

@@ -197,6 +197,13 @@ public:
 		SUBWINDOW_CANVAS_LAYER = 1024
 	};
 
+	enum VRSMode {
+		VRS_DISABLED,
+		VRS_TEXTURE,
+		VRS_XR,
+		VRS_MAX
+	};
+
 private:
 	friend class ViewportTexture;
 
@@ -297,7 +304,7 @@ private:
 	Scaling3DMode scaling_3d_mode = SCALING_3D_MODE_BILINEAR;
 	float scaling_3d_scale = 1.0;
 	float fsr_sharpness = 0.2f;
-	float fsr_mipmap_bias = 0.0f;
+	float texture_mipmap_bias = 0.0f;
 	bool use_debanding = false;
 	float mesh_lod_threshold = 1.0;
 	bool use_occlusion_culling = false;
@@ -332,6 +339,10 @@ private:
 		Window *window = nullptr;
 		RID canvas_item;
 	};
+
+	// VRS
+	VRSMode vrs_mode = VRS_DISABLED;
+	Ref<Texture2D> vrs_texture;
 
 	struct GUI {
 		// info used when this is a window
@@ -529,8 +540,8 @@ public:
 	void set_fsr_sharpness(float p_fsr_sharpness);
 	float get_fsr_sharpness() const;
 
-	void set_fsr_mipmap_bias(float p_fsr_mipmap_bias);
-	float get_fsr_mipmap_bias() const;
+	void set_texture_mipmap_bias(float p_texture_mipmap_bias);
+	float get_texture_mipmap_bias() const;
 
 	void set_use_debanding(bool p_use_debanding);
 	bool is_using_debanding() const;
@@ -603,6 +614,14 @@ public:
 
 	void set_default_canvas_item_texture_repeat(DefaultCanvasItemTextureRepeat p_repeat);
 	DefaultCanvasItemTextureRepeat get_default_canvas_item_texture_repeat() const;
+
+	// VRS
+
+	void set_vrs_mode(VRSMode p_vrs_mode);
+	VRSMode get_vrs_mode() const;
+
+	void set_vrs_texture(Ref<Texture2D> p_texture);
+	Ref<Texture2D> get_vrs_texture() const;
 
 	virtual DisplayServer::WindowID get_window_id() const = 0;
 
@@ -690,6 +709,7 @@ public:
 	bool is_using_xr();
 #endif // _3D_DISABLED
 
+	virtual void _validate_property(PropertyInfo &property) const override;
 	Viewport();
 	~Viewport();
 };
@@ -752,10 +772,11 @@ VARIANT_ENUM_CAST(Viewport::ScreenSpaceAA);
 VARIANT_ENUM_CAST(Viewport::DebugDraw);
 VARIANT_ENUM_CAST(Viewport::SDFScale);
 VARIANT_ENUM_CAST(Viewport::SDFOversize);
+VARIANT_ENUM_CAST(Viewport::VRSMode);
 VARIANT_ENUM_CAST(SubViewport::ClearMode);
 VARIANT_ENUM_CAST(Viewport::RenderInfo);
 VARIANT_ENUM_CAST(Viewport::RenderInfoType);
 VARIANT_ENUM_CAST(Viewport::DefaultCanvasItemTextureFilter);
 VARIANT_ENUM_CAST(Viewport::DefaultCanvasItemTextureRepeat);
 
-#endif
+#endif // VIEWPORT_H

@@ -133,7 +133,7 @@ Error GlobalSignal::do_callp(const StringName& signal_name, const Variant **p_ar
 		if (c.is_valid()){
 			Variant return_val;
 			Callable::CallError e;
-			c.call(args, argc, return_val, e);
+			c.callp(args, argc, return_val, e);
 			if(debug_log){
 				print_line(vformat("GlobalSignal::emit signal: %s ok", signal));
 			}

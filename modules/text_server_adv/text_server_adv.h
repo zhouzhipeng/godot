@@ -65,11 +65,12 @@
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/ref.hpp>
+#include <godot_cpp/classes/worker_thread_pool.hpp>
 
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/hash_set.hpp>
 #include <godot_cpp/templates/rid_owner.hpp>
-#include <godot_cpp/templates/thread_work_pool.hpp>
+
 #include <godot_cpp/templates/vector.hpp>
 
 using namespace godot;
@@ -77,9 +78,9 @@ using namespace godot;
 #else
 // Headers for building as built-in module.
 
+#include "core/object/worker_thread_pool.h"
 #include "core/templates/hash_map.h"
 #include "core/templates/rid_owner.h"
-#include "core/templates/thread_work_pool.h"
 #include "scene/resources/texture.h"
 #include "servers/text/text_server_extension.h"
 
@@ -100,6 +101,7 @@ using namespace godot;
 #include <unicode/uloc.h>
 #include <unicode/unorm2.h>
 #include <unicode/uscript.h>
+#include <unicode/uspoof.h>
 #include <unicode/ustring.h>
 #include <unicode/utypes.h>
 
@@ -111,7 +113,10 @@ using namespace godot;
 #include FT_ADVANCES_H
 #include FT_MULTIPLE_MASTERS_H
 #include FT_BBOX_H
-
+#include FT_CONFIG_OPTIONS_H
+#if !defined(FT_CONFIG_OPTION_USE_BROTLI) && !defined(_MSC_VER)
+#warning FreeType is configured without Brotli support, built-in fonts will not be available.
+#endif
 #include <hb-ft.h>
 #include <hb-ot.h>
 #endif
@@ -232,7 +237,7 @@ class TextServerAdvanced : public TextServerExtension {
 		double embolden = 0.0;
 		Transform2D transform;
 
-		uint32_t style_flags = 0;
+		BitField<TextServer::FontStyle> style_flags = 0;
 		String font_name;
 		String style_name;
 
@@ -252,10 +257,8 @@ class TextServerAdvanced : public TextServerExtension {
 		const uint8_t *data_ptr;
 		size_t data_size;
 		int face_index = 0;
-		mutable ThreadWorkPool work_pool;
 
 		~FontAdvanced() {
-			work_pool.finish();
 			for (const KeyValue<Vector2i, FontForSizeAdvanced *> &E : cache) {
 				memdelete(E.value);
 			}
@@ -486,8 +489,8 @@ public:
 
 	virtual int64_t font_get_face_count(const RID &p_font_rid) const override;
 
-	virtual void font_set_style(const RID &p_font_rid, int64_t /*FontStyle*/ p_style) override;
-	virtual int64_t /*FontStyle*/ font_get_style(const RID &p_font_rid) const override;
+	virtual void font_set_style(const RID &p_font_rid, BitField<FontStyle> p_style) override;
+	virtual BitField<FontStyle> font_get_style(const RID &p_font_rid) const override;
 
 	virtual void font_set_style_name(const RID &p_font_rid, const String &p_name) override;
 	virtual String font_get_style_name(const RID &p_font_rid) const override;
@@ -664,7 +667,7 @@ public:
 	virtual RID shaped_text_substr(const RID &p_shaped, int64_t p_start, int64_t p_length) const override;
 	virtual RID shaped_text_get_parent(const RID &p_shaped) const override;
 
-	virtual double shaped_text_fit_to_width(const RID &p_shaped, double p_width, int64_t /*JustificationFlag*/ p_jst_flags = JUSTIFICATION_WORD_BOUND | JUSTIFICATION_KASHIDA) override;
+	virtual double shaped_text_fit_to_width(const RID &p_shaped, double p_width, BitField<TextServer::JustificationFlag> p_jst_flags = JUSTIFICATION_WORD_BOUND | JUSTIFICATION_KASHIDA) override;
 	virtual double shaped_text_tab_align(const RID &p_shaped, const PackedFloat32Array &p_tab_stops) override;
 
 	virtual bool shaped_text_shape(const RID &p_shaped) override;
@@ -676,7 +679,7 @@ public:
 	virtual const Glyph *shaped_text_get_ellipsis_glyphs(const RID &p_shaped) const override;
 	virtual int64_t shaped_text_get_ellipsis_glyph_count(const RID &p_shaped) const override;
 
-	virtual void shaped_text_overrun_trim_to_width(const RID &p_shaped, double p_width, int64_t p_trim_flags) override;
+	virtual void shaped_text_overrun_trim_to_width(const RID &p_shaped, double p_width, BitField<TextServer::TextOverrunFlag> p_trim_flags) override;
 
 	virtual bool shaped_text_is_ready(const RID &p_shaped) const override;
 
@@ -702,7 +705,11 @@ public:
 
 	virtual PackedInt32Array string_get_word_breaks(const String &p_string, const String &p_language = "") const override;
 
+	virtual int is_confusable(const String &p_string, const PackedStringArray &p_dict) const override;
+	virtual bool spoof_check(const String &p_string) const override;
+
 	virtual String strip_diacritics(const String &p_string) const override;
+	virtual bool is_valid_identifier(const String &p_string) const override;
 
 	virtual String string_to_upper(const String &p_string, const String &p_language = "") const override;
 	virtual String string_to_lower(const String &p_string, const String &p_language = "") const override;

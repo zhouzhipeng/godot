@@ -50,7 +50,7 @@ enum PropertyHint {
 	PROPERTY_HINT_RANGE, ///< hint_text = "min,max[,step][,or_greater][,or_lesser][,no_slider][,radians][,degrees][,exp][,suffix:<keyword>] range.
 	PROPERTY_HINT_ENUM, ///< hint_text= "val1,val2,val3,etc"
 	PROPERTY_HINT_ENUM_SUGGESTION, ///< hint_text= "val1,val2,val3,etc"
-	PROPERTY_HINT_EXP_EASING, /// exponential easing function (Math::ease) use "attenuation" hint string to revert (flip h), "full" to also include in/out. (ie: "attenuation,inout")
+	PROPERTY_HINT_EXP_EASING, /// exponential easing function (Math::ease) use "attenuation" hint string to revert (flip h), "positive_only" to exclude in-out and out-in. (ie: "attenuation,positive_only")
 	PROPERTY_HINT_LINK,
 	PROPERTY_HINT_FLAGS, ///< hint_text= "flag1,flag2,etc" (as bit flags)
 	PROPERTY_HINT_LAYERS_2D_RENDER,
@@ -154,9 +154,7 @@ struct PropertyInfo {
 	String hint_string;
 	uint32_t usage = PROPERTY_USAGE_DEFAULT;
 
-#ifdef TOOLS_ENABLED
-	Vector<String> linked_properties;
-#endif
+	// If you are thinking about adding another member to this class, ask the maintainer (Juan) first.
 
 	_FORCE_INLINE_ PropertyInfo added_usage(uint32_t p_fl) const {
 		PropertyInfo pi = *this;
@@ -358,6 +356,7 @@ private:                                                                        
 	friend class ::ClassDB;                                                                                                                      \
                                                                                                                                                  \
 public:                                                                                                                                          \
+	static constexpr bool _class_is_enabled = !bool(GD_IS_DEFINED(ClassDB_Disable_##m_class)) && m_inherits::_class_is_enabled;                  \
 	virtual String get_class() const override {                                                                                                  \
 		if (_get_extension()) {                                                                                                                  \
 			return _get_extension()->class_name.operator String();                                                                               \
@@ -509,7 +508,6 @@ public:
 		Callable callable;
 
 		uint32_t flags = 0;
-		Vector<Variant> binds;
 		bool operator<(const Connection &p_conn) const;
 
 		operator Variant() const;
@@ -669,6 +667,8 @@ public: // Should be protected, but bug in clang++.
 	_FORCE_INLINE_ static void register_custom_data_to_otdb() {}
 	Array _get_script_method_list_bind() const;
 public:
+	static constexpr bool _class_is_enabled = true;
+
 	void notify_property_list_changed();
 
 	static void *get_class_ptr_static() {
@@ -830,7 +830,7 @@ public:
 	int get_persistent_signal_connection_count() const;
 	void get_signals_connected_to_this(List<Connection> *p_connections) const;
 
-	Error connect(const StringName &p_signal, const Callable &p_callable, const Vector<Variant> &p_binds = Vector<Variant>(), uint32_t p_flags = 0);
+	Error connect(const StringName &p_signal, const Callable &p_callable, uint32_t p_flags = 0);
 	void disconnect(const StringName &p_signal, const Callable &p_callable);
 	bool is_connected(const StringName &p_signal, const Callable &p_callable) const;
 

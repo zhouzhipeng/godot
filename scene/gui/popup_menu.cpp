@@ -513,9 +513,9 @@ void PopupMenu::_draw_items() {
 	bool rtl = control->is_layout_rtl();
 	Ref<StyleBox> style = get_theme_stylebox(SNAME("panel"));
 	Ref<StyleBox> hover = get_theme_stylebox(SNAME("hover"));
-	// In Item::checkable_type enum order (less the non-checkable member).
-	Ref<Texture2D> check[] = { get_theme_icon(SNAME("checked")), get_theme_icon(SNAME("radio_checked")) };
-	Ref<Texture2D> uncheck[] = { get_theme_icon(SNAME("unchecked")), get_theme_icon(SNAME("radio_unchecked")) };
+	// In Item::checkable_type enum order (less the non-checkable member), with disabled repeated at the end.
+	Ref<Texture2D> check[] = { get_theme_icon(SNAME("checked")), get_theme_icon(SNAME("radio_checked")), get_theme_icon(SNAME("checked_disabled")), get_theme_icon(SNAME("radio_checked_disabled")) };
+	Ref<Texture2D> uncheck[] = { get_theme_icon(SNAME("unchecked")), get_theme_icon(SNAME("radio_unchecked")), get_theme_icon(SNAME("unchecked_disabled")), get_theme_icon(SNAME("radio_unchecked_disabled")) };
 	Ref<Texture2D> submenu;
 	if (rtl) {
 		submenu = get_theme_icon(SNAME("submenu_mirrored"));
@@ -558,7 +558,11 @@ void PopupMenu::_draw_items() {
 
 	float check_ofs = 0.0;
 	if (has_check) {
-		check_ofs = MAX(get_theme_icon(SNAME("checked"))->get_width(), get_theme_icon(SNAME("radio_checked"))->get_width()) + hseparation;
+		for (int i = 0; i < 4; i++) {
+			check_ofs = MAX(check_ofs, check[i]->get_width());
+			check_ofs = MAX(check_ofs, uncheck[i]->get_width());
+		}
+		check_ofs += hseparation;
 	}
 
 	Point2 ofs = Point2();
@@ -620,7 +624,8 @@ void PopupMenu::_draw_items() {
 
 		// Checkboxes
 		if (items[i].checkable_type && !items[i].separator) {
-			Texture2D *icon = (items[i].checked ? check[items[i].checkable_type - 1] : uncheck[items[i].checkable_type - 1]).ptr();
+			int disabled = int(items[i].disabled) * 2;
+			Texture2D *icon = (items[i].checked ? check[items[i].checkable_type - 1 + disabled] : uncheck[items[i].checkable_type - 1 + disabled]).ptr();
 			if (rtl) {
 				icon->draw(ci, Size2(control->get_size().width - item_ofs.x - icon->get_width(), item_ofs.y) + Point2(0, Math::floor((h - icon->get_height()) / 2.0)), icon_color);
 			} else {
@@ -1909,7 +1914,7 @@ void PopupMenu::popup(const Rect2 &p_bounds) {
 PopupMenu::PopupMenu() {
 	// Margin Container
 	margin_container = memnew(MarginContainer);
-	margin_container->set_anchors_and_offsets_preset(Control::PRESET_WIDE);
+	margin_container->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 	add_child(margin_container, false, INTERNAL_MODE_FRONT);
 	margin_container->connect("draw", callable_mp(this, &PopupMenu::_draw_background));
 
@@ -1921,7 +1926,7 @@ PopupMenu::PopupMenu() {
 	// The control which will display the items
 	control = memnew(Control);
 	control->set_clip_contents(false);
-	control->set_anchors_and_offsets_preset(Control::PRESET_WIDE);
+	control->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 	control->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	control->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	scroll_container->add_child(control, false, INTERNAL_MODE_FRONT);

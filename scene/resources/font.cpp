@@ -69,19 +69,19 @@ void Font::_bind_methods() {
 	// Drawing string.
 	ClassDB::bind_method(D_METHOD("set_cache_capacity", "single_line", "multi_line"), &Font::set_cache_capacity);
 
-	ClassDB::bind_method(D_METHOD("get_string_size", "text", "alignment", "width", "font_size", "flags", "direction", "orientation"), &Font::get_string_size, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
-	ClassDB::bind_method(D_METHOD("get_multiline_string_size", "text", "alignment", "width", "font_size", "max_lines", "flags", "direction", "orientation"), &Font::get_multiline_string_size, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(-1), DEFVAL(TextServer::BREAK_MANDATORY | TextServer::BREAK_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
+	ClassDB::bind_method(D_METHOD("get_string_size", "text", "alignment", "width", "font_size", "jst_flags", "direction", "orientation"), &Font::get_string_size, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
+	ClassDB::bind_method(D_METHOD("get_multiline_string_size", "text", "alignment", "width", "font_size", "max_lines", "brk_flags", "jst_flags", "direction", "orientation"), &Font::get_multiline_string_size, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(-1), DEFVAL(TextServer::BREAK_MANDATORY | TextServer::BREAK_WORD_BOUND), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
 
-	ClassDB::bind_method(D_METHOD("draw_string", "canvas_item", "pos", "text", "alignment", "width", "font_size", "modulate", "flags", "direction", "orientation"), &Font::draw_string, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
-	ClassDB::bind_method(D_METHOD("draw_multiline_string", "canvas_item", "pos", "text", "alignment", "width", "font_size", "max_lines", "modulate", "flags", "direction", "orientation"), &Font::draw_multiline_string, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(-1), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::BREAK_MANDATORY | TextServer::BREAK_WORD_BOUND | TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
+	ClassDB::bind_method(D_METHOD("draw_string", "canvas_item", "pos", "text", "alignment", "width", "font_size", "modulate", "jst_flags", "direction", "orientation"), &Font::draw_string, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
+	ClassDB::bind_method(D_METHOD("draw_multiline_string", "canvas_item", "pos", "text", "alignment", "width", "font_size", "max_lines", "modulate", "brk_flags", "jst_flags", "direction", "orientation"), &Font::draw_multiline_string, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(-1), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::BREAK_MANDATORY | TextServer::BREAK_WORD_BOUND), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
 
-	ClassDB::bind_method(D_METHOD("draw_string_outline", "canvas_item", "pos", "text", "alignment", "width", "font_size", "size", "modulate", "flags", "direction", "orientation"), &Font::draw_string_outline, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(1), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
-	ClassDB::bind_method(D_METHOD("draw_multiline_string_outline", "canvas_item", "pos", "text", "alignment", "width", "font_size", "max_lines", "size", "modulate", "flags", "direction", "orientation"), &Font::draw_multiline_string_outline, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(-1), DEFVAL(1), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::BREAK_MANDATORY | TextServer::BREAK_WORD_BOUND | TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
+	ClassDB::bind_method(D_METHOD("draw_string_outline", "canvas_item", "pos", "text", "alignment", "width", "font_size", "size", "modulate", "jst_flags", "direction", "orientation"), &Font::draw_string_outline, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(1), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
+	ClassDB::bind_method(D_METHOD("draw_multiline_string_outline", "canvas_item", "pos", "text", "alignment", "width", "font_size", "max_lines", "size", "modulate", "brk_flags", "jst_flags", "direction", "orientation"), &Font::draw_multiline_string_outline, DEFVAL(HORIZONTAL_ALIGNMENT_LEFT), DEFVAL(-1), DEFVAL(DEFAULT_FONT_SIZE), DEFVAL(-1), DEFVAL(1), DEFVAL(Color(1.0, 1.0, 1.0)), DEFVAL(TextServer::BREAK_MANDATORY | TextServer::BREAK_WORD_BOUND), DEFVAL(TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_WORD_BOUND), DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(TextServer::ORIENTATION_HORIZONTAL));
 
 	// Drawing char.
-	ClassDB::bind_method(D_METHOD("get_char_size", "char"), &Font::get_char_size);
-	ClassDB::bind_method(D_METHOD("draw_char", "canvas_item", "pos", "char", "modulate"), &Font::draw_char, DEFVAL(Color(1.0, 1.0, 1.0)));
-	ClassDB::bind_method(D_METHOD("draw_char_outline", "canvas_item", "pos", "char", "size", "modulate"), &Font::draw_char_outline, DEFVAL(-1), DEFVAL(Color(1.0, 1.0, 1.0)));
+	ClassDB::bind_method(D_METHOD("get_char_size", "char", "font_size"), &Font::get_char_size);
+	ClassDB::bind_method(D_METHOD("draw_char", "canvas_item", "pos", "char", "font_size", "modulate"), &Font::draw_char, DEFVAL(Color(1.0, 1.0, 1.0)));
+	ClassDB::bind_method(D_METHOD("draw_char_outline", "canvas_item", "pos", "char", "font_size", "size", "modulate"), &Font::draw_char_outline, DEFVAL(-1), DEFVAL(Color(1.0, 1.0, 1.0)));
 
 	// Helper functions.
 	ClassDB::bind_method(D_METHOD("has_char", "char"), &Font::has_char);
@@ -157,7 +157,7 @@ void Font::set_fallbacks(const TypedArray<Font> &p_fallbacks) {
 	for (int i = 0; i < fallbacks.size(); i++) {
 		Ref<Font> f = fallbacks[i];
 		if (f.is_valid()) {
-			f->connect(CoreStringNames::get_singleton()->changed, callable_mp(this, &Font::_invalidate_rids), varray(), CONNECT_REFERENCE_COUNTED);
+			f->connect(CoreStringNames::get_singleton()->changed, callable_mp(this, &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
 		}
 	}
 	_invalidate_rids();
@@ -239,7 +239,7 @@ String Font::get_font_style_name() const {
 	return TS->font_get_style_name(_get_rid());
 }
 
-uint32_t Font::get_font_style() const {
+BitField<TextServer::FontStyle> Font::get_font_style() const {
 	return TS->font_get_style(_get_rid());
 }
 
@@ -253,15 +253,15 @@ void Font::set_cache_capacity(int p_single_line, int p_multi_line) {
 	cache_wrap.set_capacity(p_multi_line);
 }
 
-Size2 Font::get_string_size(const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, uint16_t p_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
+Size2 Font::get_string_size(const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, BitField<TextServer::JustificationFlag> p_jst_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
 	uint64_t hash = p_text.hash64();
 	hash = hash_djb2_one_64(p_font_size, hash);
 	if (p_alignment == HORIZONTAL_ALIGNMENT_FILL) {
 		hash = hash_djb2_one_64(hash_murmur3_one_float(p_width), hash);
-		hash = hash_djb2_one_64(p_flags, hash);
-		hash = hash_djb2_one_64(p_direction, hash);
-		hash = hash_djb2_one_64(p_orientation, hash);
+		hash = hash_djb2_one_64(p_jst_flags.operator uint32_t(), hash);
 	}
+	hash = hash_djb2_one_64(p_direction, hash);
+	hash = hash_djb2_one_64(p_orientation, hash);
 
 	Ref<TextLine> buffer;
 	if (cache.has(hash)) {
@@ -271,16 +271,22 @@ Size2 Font::get_string_size(const String &p_text, HorizontalAlignment p_alignmen
 		buffer->set_direction(p_direction);
 		buffer->set_orientation(p_orientation);
 		buffer->add_string(p_text, Ref<Font>(this), p_font_size);
+		if (p_alignment == HORIZONTAL_ALIGNMENT_FILL) {
+			buffer->set_horizontal_alignment(p_alignment);
+			buffer->set_width(p_width);
+			buffer->set_flags(p_jst_flags);
+		}
 		cache.insert(hash, buffer);
 	}
 	return buffer->get_size();
 }
 
-Size2 Font::get_multiline_string_size(const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_max_lines, uint16_t p_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
+Size2 Font::get_multiline_string_size(const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_max_lines, BitField<TextServer::LineBreakFlag> p_brk_flags, BitField<TextServer::JustificationFlag> p_jst_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
 	uint64_t hash = p_text.hash64();
 	hash = hash_djb2_one_64(p_font_size, hash);
 	hash = hash_djb2_one_64(hash_murmur3_one_float(p_width), hash);
-	hash = hash_djb2_one_64(p_flags, hash);
+	hash = hash_djb2_one_64(p_brk_flags.operator uint32_t(), hash);
+	hash = hash_djb2_one_64(p_jst_flags.operator uint32_t(), hash);
 	hash = hash_djb2_one_64(p_direction, hash);
 	hash = hash_djb2_one_64(p_orientation, hash);
 
@@ -293,7 +299,8 @@ Size2 Font::get_multiline_string_size(const String &p_text, HorizontalAlignment 
 		lines_buffer->set_orientation(p_orientation);
 		lines_buffer->add_string(p_text, Ref<Font>(this), p_font_size);
 		lines_buffer->set_width(p_width);
-		lines_buffer->set_flags(p_flags);
+		lines_buffer->set_break_flags(p_brk_flags);
+		lines_buffer->set_justification_flags(p_jst_flags);
 		cache_wrap.insert(hash, lines_buffer);
 	}
 
@@ -303,13 +310,15 @@ Size2 Font::get_multiline_string_size(const String &p_text, HorizontalAlignment 
 	return lines_buffer->get_size();
 }
 
-void Font::draw_string(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, const Color &p_modulate, uint16_t p_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
+void Font::draw_string(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, const Color &p_modulate, BitField<TextServer::JustificationFlag> p_jst_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
 	uint64_t hash = p_text.hash64();
 	hash = hash_djb2_one_64(p_font_size, hash);
 	if (p_alignment == HORIZONTAL_ALIGNMENT_FILL) {
 		hash = hash_djb2_one_64(hash_murmur3_one_float(p_width), hash);
-		hash = hash_djb2_one_64(p_flags, hash);
+		hash = hash_djb2_one_64(p_jst_flags.operator uint32_t(), hash);
 	}
+	hash = hash_djb2_one_64(p_direction, hash);
+	hash = hash_djb2_one_64(p_orientation, hash);
 
 	Ref<TextLine> buffer;
 	if (cache.has(hash)) {
@@ -331,16 +340,19 @@ void Font::draw_string(RID p_canvas_item, const Point2 &p_pos, const String &p_t
 
 	buffer->set_width(p_width);
 	buffer->set_horizontal_alignment(p_alignment);
-	buffer->set_flags(p_flags);
+	if (p_alignment == HORIZONTAL_ALIGNMENT_FILL) {
+		buffer->set_flags(p_jst_flags);
+	}
 
 	buffer->draw(p_canvas_item, ofs, p_modulate);
 }
 
-void Font::draw_multiline_string(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_max_lines, const Color &p_modulate, uint16_t p_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
+void Font::draw_multiline_string(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_max_lines, const Color &p_modulate, BitField<TextServer::LineBreakFlag> p_brk_flags, BitField<TextServer::JustificationFlag> p_jst_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
 	uint64_t hash = p_text.hash64();
 	hash = hash_djb2_one_64(p_font_size, hash);
 	hash = hash_djb2_one_64(hash_murmur3_one_float(p_width), hash);
-	hash = hash_djb2_one_64(p_flags, hash);
+	hash = hash_djb2_one_64(p_brk_flags.operator uint32_t(), hash);
+	hash = hash_djb2_one_64(p_jst_flags.operator uint32_t(), hash);
 	hash = hash_djb2_one_64(p_direction, hash);
 	hash = hash_djb2_one_64(p_orientation, hash);
 
@@ -353,7 +365,8 @@ void Font::draw_multiline_string(RID p_canvas_item, const Point2 &p_pos, const S
 		lines_buffer->set_orientation(p_orientation);
 		lines_buffer->add_string(p_text, Ref<Font>(this), p_font_size);
 		lines_buffer->set_width(p_width);
-		lines_buffer->set_flags(p_flags);
+		lines_buffer->set_break_flags(p_brk_flags);
+		lines_buffer->set_justification_flags(p_jst_flags);
 		cache_wrap.insert(hash, lines_buffer);
 	}
 
@@ -370,13 +383,15 @@ void Font::draw_multiline_string(RID p_canvas_item, const Point2 &p_pos, const S
 	lines_buffer->draw(p_canvas_item, ofs, p_modulate);
 }
 
-void Font::draw_string_outline(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_size, const Color &p_modulate, uint16_t p_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
+void Font::draw_string_outline(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_size, const Color &p_modulate, BitField<TextServer::JustificationFlag> p_jst_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
 	uint64_t hash = p_text.hash64();
 	hash = hash_djb2_one_64(p_font_size, hash);
 	if (p_alignment == HORIZONTAL_ALIGNMENT_FILL) {
 		hash = hash_djb2_one_64(hash_murmur3_one_float(p_width), hash);
-		hash = hash_djb2_one_64(p_flags, hash);
+		hash = hash_djb2_one_64(p_jst_flags.operator uint32_t(), hash);
 	}
+	hash = hash_djb2_one_64(p_direction, hash);
+	hash = hash_djb2_one_64(p_orientation, hash);
 
 	Ref<TextLine> buffer;
 	if (cache.has(hash)) {
@@ -398,16 +413,19 @@ void Font::draw_string_outline(RID p_canvas_item, const Point2 &p_pos, const Str
 
 	buffer->set_width(p_width);
 	buffer->set_horizontal_alignment(p_alignment);
-	buffer->set_flags(p_flags);
+	if (p_alignment == HORIZONTAL_ALIGNMENT_FILL) {
+		buffer->set_flags(p_jst_flags);
+	}
 
 	buffer->draw_outline(p_canvas_item, ofs, p_size, p_modulate);
 }
 
-void Font::draw_multiline_string_outline(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_max_lines, int p_size, const Color &p_modulate, uint16_t p_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
+void Font::draw_multiline_string_outline(RID p_canvas_item, const Point2 &p_pos, const String &p_text, HorizontalAlignment p_alignment, float p_width, int p_font_size, int p_max_lines, int p_size, const Color &p_modulate, BitField<TextServer::LineBreakFlag> p_brk_flags, BitField<TextServer::JustificationFlag> p_jst_flags, TextServer::Direction p_direction, TextServer::Orientation p_orientation) const {
 	uint64_t hash = p_text.hash64();
 	hash = hash_djb2_one_64(p_font_size, hash);
 	hash = hash_djb2_one_64(hash_murmur3_one_float(p_width), hash);
-	hash = hash_djb2_one_64(p_flags, hash);
+	hash = hash_djb2_one_64(p_brk_flags.operator uint32_t(), hash);
+	hash = hash_djb2_one_64(p_jst_flags.operator uint32_t(), hash);
 	hash = hash_djb2_one_64(p_direction, hash);
 	hash = hash_djb2_one_64(p_orientation, hash);
 
@@ -420,7 +438,8 @@ void Font::draw_multiline_string_outline(RID p_canvas_item, const Point2 &p_pos,
 		lines_buffer->set_orientation(p_orientation);
 		lines_buffer->add_string(p_text, Ref<Font>(this), p_font_size);
 		lines_buffer->set_width(p_width);
-		lines_buffer->set_flags(p_flags);
+		lines_buffer->set_break_flags(p_brk_flags);
+		lines_buffer->set_justification_flags(p_jst_flags);
 		cache_wrap.insert(hash, lines_buffer);
 	}
 
@@ -980,7 +999,7 @@ void FontFile::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "antialiased", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE), "set_antialiased", "is_antialiased");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "font_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE), "set_font_name", "get_font_name");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "style_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE), "set_font_style_name", "get_font_style_name");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "font_style", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE), "set_font_style", "get_font_style");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "font_style", PROPERTY_HINT_FLAGS, "Bold,Italic,Fixed Size", PROPERTY_USAGE_STORAGE), "set_font_style", "get_font_style");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "subpixel_positioning", PROPERTY_HINT_ENUM, "Disabled,Auto,One half of a pixel,One quarter of a pixel", PROPERTY_USAGE_STORAGE), "set_subpixel_positioning", "get_subpixel_positioning");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "multichannel_signed_distance_field", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE), "set_multichannel_signed_distance_field", "is_multichannel_signed_distance_field");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "msdf_pixel_range", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE), "set_msdf_pixel_range", "get_msdf_pixel_range");
@@ -1332,7 +1351,7 @@ Error FontFile::load_bitmap_font(const String &p_path) {
 	int height = 0;
 	int ascent = 0;
 	int outline = 0;
-	uint32_t st_flags = 0;
+	BitField<TextServer::FontStyle> st_flags = 0;
 	String font_name;
 
 	bool packed = false;
@@ -1358,10 +1377,10 @@ Error FontFile::load_bitmap_font(const String &p_path) {
 					uint8_t flags = f->get_8();
 					ERR_FAIL_COND_V_MSG(flags & 0x02, ERR_CANT_CREATE, RTR("Non-unicode version of BMFont is not supported."));
 					if (flags & (1 << 3)) {
-						st_flags |= TextServer::FONT_BOLD;
+						st_flags.set_flag(TextServer::FONT_BOLD);
 					}
 					if (flags & (1 << 2)) {
-						st_flags |= TextServer::FONT_ITALIC;
+						st_flags.set_flag(TextServer::FONT_ITALIC);
 					}
 					f->get_8(); // non-unicode charset, skip
 					f->get_16(); // stretch_h, skip
@@ -1588,12 +1607,12 @@ Error FontFile::load_bitmap_font(const String &p_path) {
 				}
 				if (keys.has("bold")) {
 					if (keys["bold"].to_int()) {
-						st_flags |= TextServer::FONT_BOLD;
+						st_flags.set_flag(TextServer::FONT_BOLD);
 					}
 				}
 				if (keys.has("italic")) {
 					if (keys["italic"].to_int()) {
-						st_flags |= TextServer::FONT_ITALIC;
+						st_flags.set_flag(TextServer::FONT_ITALIC);
 					}
 				}
 				if (keys.has("face")) {
@@ -1840,7 +1859,7 @@ void FontFile::set_font_style_name(const String &p_name) {
 	TS->font_set_style_name(cache[0], p_name);
 }
 
-void FontFile::set_font_style(uint32_t p_style) {
+void FontFile::set_font_style(BitField<TextServer::FontStyle> p_style) {
 	_ensure_rid(0);
 	TS->font_set_style(cache[0], p_style);
 }
@@ -2515,7 +2534,7 @@ void FontVariation::set_base_font(const Ref<Font> &p_font) {
 		}
 		base_font = p_font;
 		if (base_font.is_valid()) {
-			base_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(this), &Font::_invalidate_rids), varray(), CONNECT_REFERENCE_COUNTED);
+			base_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(this), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
 		}
 		_invalidate_rids();
 		notify_property_list_changed();
@@ -2546,7 +2565,7 @@ Ref<Font> FontVariation::_get_base_font_or_default() const {
 				Ref<Font> f = Theme::get_project_default()->get_theme_item(Theme::DATA_TYPE_FONT, "font", E);
 				if (f.is_valid()) {
 					theme_font = f;
-					theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<FontVariation *>(this)), &Font::_invalidate_rids), varray(), CONNECT_REFERENCE_COUNTED);
+					theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<FontVariation *>(this)), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
 				}
 				return f;
 			}
@@ -2563,7 +2582,7 @@ Ref<Font> FontVariation::_get_base_font_or_default() const {
 				Ref<Font> f = Theme::get_default()->get_theme_item(Theme::DATA_TYPE_FONT, "font", E);
 				if (f.is_valid()) {
 					theme_font = f;
-					theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<FontVariation *>(this)), &Font::_invalidate_rids), varray(), CONNECT_REFERENCE_COUNTED);
+					theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<FontVariation *>(this)), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
 				}
 				return f;
 			}
@@ -2573,7 +2592,7 @@ Ref<Font> FontVariation::_get_base_font_or_default() const {
 		Ref<Font> f = Theme::get_default()->get_theme_item(Theme::DATA_TYPE_FONT, "font", StringName());
 		if (f.is_valid()) {
 			theme_font = f;
-			theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<FontVariation *>(this)), &Font::_invalidate_rids), varray(), CONNECT_REFERENCE_COUNTED);
+			theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<FontVariation *>(this)), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
 		}
 		return f;
 	}
@@ -2672,5 +2691,376 @@ FontVariation::FontVariation() {
 }
 
 FontVariation::~FontVariation() {
+	reset_state();
+}
+
+/*************************************************************************/
+/*  SystemFont                                                           */
+/*************************************************************************/
+
+void SystemFont::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_antialiased", "antialiased"), &SystemFont::set_antialiased);
+	ClassDB::bind_method(D_METHOD("is_antialiased"), &SystemFont::is_antialiased);
+
+	ClassDB::bind_method(D_METHOD("set_generate_mipmaps", "generate_mipmaps"), &SystemFont::set_generate_mipmaps);
+	ClassDB::bind_method(D_METHOD("get_generate_mipmaps"), &SystemFont::get_generate_mipmaps);
+
+	ClassDB::bind_method(D_METHOD("set_force_autohinter", "force_autohinter"), &SystemFont::set_force_autohinter);
+	ClassDB::bind_method(D_METHOD("is_force_autohinter"), &SystemFont::is_force_autohinter);
+
+	ClassDB::bind_method(D_METHOD("set_hinting", "hinting"), &SystemFont::set_hinting);
+	ClassDB::bind_method(D_METHOD("get_hinting"), &SystemFont::get_hinting);
+
+	ClassDB::bind_method(D_METHOD("set_subpixel_positioning", "subpixel_positioning"), &SystemFont::set_subpixel_positioning);
+	ClassDB::bind_method(D_METHOD("get_subpixel_positioning"), &SystemFont::get_subpixel_positioning);
+
+	ClassDB::bind_method(D_METHOD("set_oversampling", "oversampling"), &SystemFont::set_oversampling);
+	ClassDB::bind_method(D_METHOD("get_oversampling"), &SystemFont::get_oversampling);
+
+	ClassDB::bind_method(D_METHOD("get_font_names"), &SystemFont::get_font_names);
+	ClassDB::bind_method(D_METHOD("set_font_names", "names"), &SystemFont::set_font_names);
+
+	ClassDB::bind_method(D_METHOD("set_font_style", "style"), &SystemFont::set_font_style);
+
+	ADD_PROPERTY(PropertyInfo(Variant::PACKED_STRING_ARRAY, "font_names"), "set_font_names", "get_font_names");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "font_style", PROPERTY_HINT_FLAGS, "Bold,Italic"), "set_font_style", "get_font_style");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "antialiased"), "set_antialiased", "is_antialiased");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "generate_mipmaps"), "set_generate_mipmaps", "get_generate_mipmaps");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "force_autohinter"), "set_force_autohinter", "is_force_autohinter");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "hinting", PROPERTY_HINT_ENUM, "None,Light,Normal"), "set_hinting", "get_hinting");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "subpixel_positioning", PROPERTY_HINT_ENUM, "Disabled,Auto,One half of a pixel,One quarter of a pixel"), "set_subpixel_positioning", "get_subpixel_positioning");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "oversampling", PROPERTY_HINT_RANGE, "0,10,0.1"), "set_oversampling", "get_oversampling");
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "fallbacks", PROPERTY_HINT_ARRAY_TYPE, vformat("%s/%s:%s", Variant::OBJECT, PROPERTY_HINT_RESOURCE_TYPE, "Font")), "set_fallbacks", "get_fallbacks");
+}
+
+void SystemFont::_update_rids() const {
+	Ref<Font> f = _get_base_font_or_default();
+
+	rids.clear();
+	if (fallbacks.is_empty() && f.is_valid()) {
+		RID rid = _get_rid();
+		if (rid.is_valid()) {
+			rids.push_back(rid);
+		}
+
+		const TypedArray<Font> &base_fallbacks = f->get_fallbacks();
+		for (int i = 0; i < base_fallbacks.size(); i++) {
+			_update_rids_fb(base_fallbacks[i], 0);
+		}
+	} else {
+		_update_rids_fb(const_cast<SystemFont *>(this), 0);
+	}
+	dirty_rids = false;
+}
+
+void SystemFont::_update_base_font() {
+	if (base_font.is_valid()) {
+		base_font->disconnect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(this), &Font::_invalidate_rids));
+		base_font.unref();
+	}
+
+	face_indeces.clear();
+	ftr_weight = 0;
+	ftr_italic = 0;
+	for (const String &E : names) {
+		if (E.is_empty()) {
+			continue;
+		}
+
+		String path = OS::get_singleton()->get_system_font_path(E, style & TextServer::FONT_BOLD, style & TextServer::FONT_ITALIC);
+		if (path.is_empty()) {
+			continue;
+		}
+		Ref<FontFile> file;
+		file.instantiate();
+		Error err = file->load_dynamic_font(path);
+		if (err != OK) {
+			continue;
+		}
+
+		// If it's a font collection check all faces to match requested style.
+		for (int i = 0; i < file->get_face_count(); i++) {
+			file->set_face_index(0, i);
+			if (((file->get_font_style() & TextServer::FONT_BOLD) == (style & TextServer::FONT_BOLD)) && ((file->get_font_style() & TextServer::FONT_ITALIC) == (style & TextServer::FONT_ITALIC))) {
+				face_indeces.push_back(i);
+			}
+		}
+		if (face_indeces.is_empty()) {
+			face_indeces.push_back(0);
+		}
+		file->set_face_index(0, face_indeces[0]);
+
+		// If it's a variable font, apply weight and italic coordinates to match requested style.
+		Dictionary ftr = file->get_supported_variation_list();
+		if ((style & TextServer::FONT_BOLD) && ftr.has(TS->name_to_tag("weight"))) {
+			ftr_weight = 700;
+		}
+		if ((style & TextServer::FONT_ITALIC) && ftr.has(TS->name_to_tag("italic"))) {
+			ftr_italic = 1;
+		}
+
+		// Apply font rendering settings.
+		file->set_antialiased(antialiased);
+		file->set_generate_mipmaps(mipmaps);
+		file->set_force_autohinter(force_autohinter);
+		file->set_hinting(hinting);
+		file->set_subpixel_positioning(subpixel_positioning);
+		file->set_oversampling(oversampling);
+
+		base_font = file;
+	}
+
+	if (base_font.is_valid()) {
+		base_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(this), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
+	}
+
+	_invalidate_rids();
+	notify_property_list_changed();
+}
+
+void SystemFont::reset_state() {
+	if (base_font.is_valid()) {
+		base_font->disconnect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(this), &Font::_invalidate_rids));
+		base_font.unref();
+	}
+
+	if (theme_font.is_valid()) {
+		theme_font->disconnect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(this), &Font::_invalidate_rids));
+		theme_font.unref();
+	}
+
+	names.clear();
+	face_indeces.clear();
+	ftr_weight = 0;
+	ftr_italic = 0;
+	style = 0;
+	antialiased = true;
+	mipmaps = false;
+	force_autohinter = false;
+	hinting = TextServer::HINTING_LIGHT;
+	subpixel_positioning = TextServer::SUBPIXEL_POSITIONING_DISABLED;
+	oversampling = 0.f;
+
+	Font::reset_state();
+}
+
+Ref<Font> SystemFont::_get_base_font_or_default() const {
+	if (theme_font.is_valid()) {
+		theme_font->disconnect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<SystemFont *>(this)), &Font::_invalidate_rids));
+		theme_font.unref();
+	}
+
+	if (base_font.is_valid()) {
+		return base_font;
+	}
+
+	// Check the project-defined Theme resource.
+	if (Theme::get_project_default().is_valid()) {
+		List<StringName> theme_types;
+		Theme::get_project_default()->get_type_dependencies(get_class_name(), StringName(), &theme_types);
+
+		for (const StringName &E : theme_types) {
+			if (Theme::get_project_default()->has_theme_item(Theme::DATA_TYPE_FONT, "font", E)) {
+				Ref<Font> f = Theme::get_project_default()->get_theme_item(Theme::DATA_TYPE_FONT, "font", E);
+				if (f.is_valid()) {
+					theme_font = f;
+					theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<SystemFont *>(this)), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
+				}
+				return f;
+			}
+		}
+	}
+
+	// Lastly, fall back on the items defined in the default Theme, if they exist.
+	if (Theme::get_default().is_valid()) {
+		List<StringName> theme_types;
+		Theme::get_default()->get_type_dependencies(get_class_name(), StringName(), &theme_types);
+
+		for (const StringName &E : theme_types) {
+			if (Theme::get_default()->has_theme_item(Theme::DATA_TYPE_FONT, "font", E)) {
+				Ref<Font> f = Theme::get_default()->get_theme_item(Theme::DATA_TYPE_FONT, "font", E);
+				if (f.is_valid()) {
+					theme_font = f;
+					theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<SystemFont *>(this)), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
+				}
+				return f;
+			}
+		}
+
+		// If they don't exist, use any type to return the default/empty value.
+		Ref<Font> f = Theme::get_default()->get_theme_item(Theme::DATA_TYPE_FONT, "font", StringName());
+		if (f.is_valid()) {
+			theme_font = f;
+			theme_font->connect(CoreStringNames::get_singleton()->changed, callable_mp(reinterpret_cast<Font *>(const_cast<SystemFont *>(this)), &Font::_invalidate_rids), CONNECT_REFERENCE_COUNTED);
+		}
+		return f;
+	}
+
+	return Ref<Font>();
+}
+
+void SystemFont::set_antialiased(bool p_antialiased) {
+	if (antialiased != p_antialiased) {
+		antialiased = p_antialiased;
+		if (base_font.is_valid()) {
+			base_font->set_antialiased(antialiased);
+		}
+		emit_changed();
+	}
+}
+
+bool SystemFont::is_antialiased() const {
+	return antialiased;
+}
+
+void SystemFont::set_generate_mipmaps(bool p_generate_mipmaps) {
+	if (mipmaps != p_generate_mipmaps) {
+		mipmaps = p_generate_mipmaps;
+		if (base_font.is_valid()) {
+			base_font->set_generate_mipmaps(mipmaps);
+		}
+		emit_changed();
+	}
+}
+
+bool SystemFont::get_generate_mipmaps() const {
+	return mipmaps;
+}
+
+void SystemFont::set_force_autohinter(bool p_force_autohinter) {
+	if (force_autohinter != p_force_autohinter) {
+		force_autohinter = p_force_autohinter;
+		if (base_font.is_valid()) {
+			base_font->set_force_autohinter(force_autohinter);
+		}
+		emit_changed();
+	}
+}
+
+bool SystemFont::is_force_autohinter() const {
+	return force_autohinter;
+}
+
+void SystemFont::set_hinting(TextServer::Hinting p_hinting) {
+	if (hinting != p_hinting) {
+		hinting = p_hinting;
+		if (base_font.is_valid()) {
+			base_font->set_hinting(hinting);
+		}
+		emit_changed();
+	}
+}
+
+TextServer::Hinting SystemFont::get_hinting() const {
+	return hinting;
+}
+
+void SystemFont::set_subpixel_positioning(TextServer::SubpixelPositioning p_subpixel) {
+	if (subpixel_positioning != p_subpixel) {
+		subpixel_positioning = p_subpixel;
+		if (base_font.is_valid()) {
+			base_font->set_subpixel_positioning(subpixel_positioning);
+		}
+		emit_changed();
+	}
+}
+
+TextServer::SubpixelPositioning SystemFont::get_subpixel_positioning() const {
+	return subpixel_positioning;
+}
+
+void SystemFont::set_oversampling(real_t p_oversampling) {
+	if (oversampling != p_oversampling) {
+		oversampling = p_oversampling;
+		if (base_font.is_valid()) {
+			base_font->set_oversampling(oversampling);
+		}
+		emit_changed();
+	}
+}
+
+real_t SystemFont::get_oversampling() const {
+	return oversampling;
+}
+
+void SystemFont::set_font_names(const PackedStringArray &p_names) {
+	if (names != p_names) {
+		names = p_names;
+		_update_base_font();
+	}
+}
+
+PackedStringArray SystemFont::get_font_names() const {
+	return names;
+}
+
+void SystemFont::set_font_style(BitField<TextServer::FontStyle> p_style) {
+	if (style != p_style) {
+		style = p_style;
+		_update_base_font();
+	}
+}
+
+BitField<TextServer::FontStyle> SystemFont::get_font_style() const {
+	return style;
+}
+
+int SystemFont::get_spacing(TextServer::SpacingType p_spacing) const {
+	if (base_font.is_valid()) {
+		return base_font->get_spacing(p_spacing);
+	} else {
+		return 0;
+	}
+}
+
+RID SystemFont::find_variation(const Dictionary &p_variation_coordinates, int p_face_index, float p_strength, Transform2D p_transform) const {
+	Ref<Font> f = _get_base_font_or_default();
+	if (f.is_valid()) {
+		Dictionary var = p_variation_coordinates;
+		if (ftr_weight > 0 && !var.has(TS->name_to_tag("weight"))) {
+			var[TS->name_to_tag("weight")] = ftr_weight;
+		}
+		if (ftr_italic > 0 && !var.has(TS->name_to_tag("italic"))) {
+			var[TS->name_to_tag("italic")] = ftr_italic;
+		}
+
+		if (!face_indeces.is_empty()) {
+			int face_index = CLAMP(p_face_index, 0, face_indeces.size() - 1);
+			return f->find_variation(var, face_indeces[face_index], p_strength, p_transform);
+		} else {
+			return f->find_variation(var, 0, p_strength, p_transform);
+		}
+	}
+	return RID();
+}
+
+RID SystemFont::_get_rid() const {
+	Ref<Font> f = _get_base_font_or_default();
+	if (f.is_valid()) {
+		if (!face_indeces.is_empty()) {
+			Dictionary var;
+			if (ftr_weight > 0) {
+				var[TS->name_to_tag("weight")] = ftr_weight;
+			}
+			if (ftr_italic > 0) {
+				var[TS->name_to_tag("italic")] = ftr_italic;
+			}
+			return f->find_variation(var, face_indeces[0]);
+		} else {
+			return f->_get_rid();
+		}
+	}
+	return RID();
+}
+
+int64_t SystemFont::get_face_count() const {
+	return face_indeces.size();
+}
+
+SystemFont::SystemFont() {
+	/* NOP */
+}
+
+SystemFont::~SystemFont() {
 	reset_state();
 }

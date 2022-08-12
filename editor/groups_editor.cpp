@@ -432,7 +432,7 @@ GroupDialog::GroupDialog() {
 
 	VBoxContainer *vbc = memnew(VBoxContainer);
 	add_child(vbc);
-	vbc->set_anchors_and_offsets_preset(Control::PRESET_WIDE, Control::PRESET_MODE_KEEP_SIZE, 8 * EDSCALE);
+	vbc->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT, Control::PRESET_MODE_KEEP_SIZE, 8 * EDSCALE);
 
 	HBoxContainer *hbc = memnew(HBoxContainer);
 	vbc->add_child(hbc);
@@ -473,7 +473,7 @@ GroupDialog::GroupDialog() {
 	add_group_button = memnew(Button);
 	add_group_button->set_text(TTR("Add"));
 	chbc->add_child(add_group_button);
-	add_group_button->connect("pressed", callable_mp(this, &GroupDialog::_add_group_pressed), varray(String()));
+	add_group_button->connect("pressed", callable_mp(this, &GroupDialog::_add_group_pressed).bind(String()));
 
 	VBoxContainer *vbc_add = memnew(VBoxContainer);
 	hbc->add_child(vbc_add);
@@ -562,7 +562,7 @@ GroupDialog::GroupDialog() {
 	group_empty->set_autowrap_mode(TextServer::AUTOWRAP_WORD_SMART);
 	group_empty->set_custom_minimum_size(Size2(100 * EDSCALE, 0));
 	nodes_to_remove->add_child(group_empty);
-	group_empty->set_anchors_and_offsets_preset(Control::PRESET_WIDE, Control::PRESET_MODE_KEEP_SIZE, 8 * EDSCALE);
+	group_empty->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT, Control::PRESET_MODE_KEEP_SIZE, 8 * EDSCALE);
 
 	set_title(TTR("Group Editor"));
 
@@ -737,7 +737,7 @@ GroupsEditor::GroupsEditor() {
 	add = memnew(Button);
 	add->set_text(TTR("Add"));
 	hbc->add_child(add);
-	add->connect("pressed", callable_mp(this, &GroupsEditor::_add_group), varray(String()));
+	add->connect("pressed", callable_mp(this, &GroupsEditor::_add_group).bind(String()));
 
 	tree = memnew(Tree);
 	tree->set_hide_root(true);

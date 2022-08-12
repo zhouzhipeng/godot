@@ -31,18 +31,17 @@
 #ifndef GLTF_STATE_H
 #define GLTF_STATE_H
 
-#include "gltf_accessor.h"
-#include "gltf_animation.h"
-#include "gltf_buffer_view.h"
-#include "gltf_camera.h"
-#include "gltf_document.h"
-#include "gltf_document_extension.h"
-#include "gltf_light.h"
-#include "gltf_mesh.h"
-#include "gltf_node.h"
-#include "gltf_skeleton.h"
-#include "gltf_skin.h"
-#include "gltf_texture.h"
+#include "extensions/gltf_light.h"
+#include "gltf_template_convert.h"
+#include "structures/gltf_accessor.h"
+#include "structures/gltf_animation.h"
+#include "structures/gltf_buffer_view.h"
+#include "structures/gltf_camera.h"
+#include "structures/gltf_mesh.h"
+#include "structures/gltf_node.h"
+#include "structures/gltf_skeleton.h"
+#include "structures/gltf_skin.h"
+#include "structures/gltf_texture.h"
 
 #include "core/templates/rb_map.h"
 #include "scene/animation/animation_player.h"
@@ -60,7 +59,9 @@ class GLTFState : public Resource {
 	Vector<uint8_t> glb_data;
 
 	bool use_named_skin_binds = false;
+	bool use_khr_texture_transform = false;
 	bool discard_meshes_and_materials = false;
+	bool create_animations = true;
 
 	Vector<Ref<GLTFNode>> nodes;
 	Vector<Vector<uint8_t>> buffers;
@@ -168,6 +169,9 @@ public:
 	Dictionary get_skeleton_to_node();
 	void set_skeleton_to_node(Dictionary p_skeleton_to_node);
 
+	bool get_create_animations();
+	void set_create_animations(bool p_create_animations);
+
 	Array get_animations();
 	void set_animations(Array p_animations);
 
@@ -192,4 +196,5 @@ public:
 	//	this->material_cache = p_material_cache;
 	//}
 };
+
 #endif // GLTF_STATE_H

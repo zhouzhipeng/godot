@@ -32,6 +32,8 @@
 
 #include "editor/editor_scale.h"
 #include "editor/import/post_import_plugin_skeleton_renamer.h"
+#include "editor/import/post_import_plugin_skeleton_rest_fixer.h"
+#include "editor/import/post_import_plugin_skeleton_track_organizer.h"
 #include "editor/import/scene_import_settings.h"
 
 void BoneMapperButton::fetch_textures() {
@@ -63,12 +65,19 @@ void BoneMapperButton::set_state(BoneMapState p_state) {
 		case BONE_MAP_STATE_SET: {
 			circle->set_modulate(EditorSettings::get_singleton()->get("editors/bone_mapper/handle_colors/set"));
 		} break;
+		case BONE_MAP_STATE_MISSING: {
+			circle->set_modulate(EditorSettings::get_singleton()->get("editors/bone_mapper/handle_colors/missing"));
+		} break;
 		case BONE_MAP_STATE_ERROR: {
 			circle->set_modulate(EditorSettings::get_singleton()->get("editors/bone_mapper/handle_colors/error"));
 		} break;
 		default: {
 		} break;
 	}
+}
+
+bool BoneMapperButton::is_require() const {
+	return require;
 }
 
 void BoneMapperButton::_notification(int p_what) {
@@ -79,8 +88,9 @@ void BoneMapperButton::_notification(int p_what) {
 	}
 }
 
-BoneMapperButton::BoneMapperButton(const StringName p_profile_bone_name, bool p_selected) {
+BoneMapperButton::BoneMapperButton(const StringName p_profile_bone_name, bool p_require, bool p_selected) {
 	profile_bone_name = p_profile_bone_name;
+	require = p_require;
 	selected = p_selected;
 }
 
@@ -89,7 +99,7 @@ BoneMapperButton::~BoneMapperButton() {
 
 void BoneMapperItem::create_editor() {
 	skeleton_bone_selector = memnew(EditorPropertyTextEnum);
-	skeleton_bone_selector->setup(skeleton_bone_names);
+	skeleton_bone_selector->setup(skeleton_bone_names, false, true);
 	skeleton_bone_selector->set_label(profile_bone_name);
 	skeleton_bone_selector->set_selectable(false);
 	skeleton_bone_selector->set_object_and_property(bone_map.ptr(), "bone_map/" + String(profile_bone_name));
@@ -251,8 +261,8 @@ void BoneMapper::recreate_editor() {
 
 	for (int i = 0; i < len; i++) {
 		if (profile->get_group(i) == profile->get_group_name(current_group_idx)) {
-			BoneMapperButton *mb = memnew(BoneMapperButton(profile->get_bone_name(i), current_bone_idx == i));
-			mb->connect("pressed", callable_mp(this, &BoneMapper::set_current_bone_idx), varray(i), CONNECT_DEFERRED);
+			BoneMapperButton *mb = memnew(BoneMapperButton(profile->get_bone_name(i), profile->is_require(i), current_bone_idx == i));
+			mb->connect("pressed", callable_mp(this, &BoneMapper::set_current_bone_idx).bind(i), CONNECT_DEFERRED);
 			mb->set_h_grow_direction(GROW_DIRECTION_BOTH);
 			mb->set_v_grow_direction(GROW_DIRECTION_BOTH);
 			Vector2 vc = profile->get_handle_offset(i);
@@ -284,8 +294,6 @@ void BoneMapper::recreate_items() {
 	Ref<SkeletonProfile> profile = bone_map->get_profile();
 	if (profile.is_valid()) {
 		PackedStringArray skeleton_bone_names;
-		skeleton_bone_names.push_back(String());
-
 		int len = skeleton->get_bone_count();
 		for (int i = 0; i < len; i++) {
 			skeleton_bone_names.push_back(skeleton->get_bone_name(i));
@@ -306,15 +314,51 @@ void BoneMapper::recreate_items() {
 void BoneMapper::_update_state() {
 	int len = bone_mapper_buttons.size();
 	for (int i = 0; i < len; i++) {
-		StringName sbn = bone_map->get_skeleton_bone_name(bone_mapper_buttons[i]->get_profile_bone_name());
-		if (skeleton->find_bone(sbn) >= 0) {
+		StringName pbn = bone_mapper_buttons[i]->get_profile_bone_name();
+		StringName sbn = bone_map->get_skeleton_bone_name(pbn);
+		int bone_idx = skeleton->find_bone(sbn);
+		if (bone_idx >= 0) {
 			if (bone_map->get_skeleton_bone_name_count(sbn) == 1) {
-				bone_mapper_buttons[i]->set_state(BoneMapperButton::BONE_MAP_STATE_SET);
+				Ref<SkeletonProfile> prof = bone_map->get_profile();
+
+				StringName parent_name = prof->get_bone_parent(prof->find_bone(pbn));
+				Vector<int> prof_parent_bones;
+				while (parent_name != StringName()) {
+					prof_parent_bones.push_back(skeleton->find_bone(bone_map->get_skeleton_bone_name(parent_name)));
+					if (prof->find_bone(parent_name) == -1) {
+						break;
+					}
+					parent_name = prof->get_bone_parent(prof->find_bone(parent_name));
+				}
+
+				int parent_id = skeleton->get_bone_parent(bone_idx);
+				Vector<int> skel_parent_bones;
+				while (parent_id >= 0) {
+					skel_parent_bones.push_back(parent_id);
+					parent_id = skeleton->get_bone_parent(parent_id);
+				}
+
+				bool is_broken = false;
+				for (int j = 0; j < prof_parent_bones.size(); j++) {
+					if (prof_parent_bones[j] != -1 && !skel_parent_bones.has(prof_parent_bones[j])) {
+						is_broken = true;
+					}
+				}
+
+				if (is_broken) {
+					bone_mapper_buttons[i]->set_state(BoneMapperButton::BONE_MAP_STATE_ERROR);
+				} else {
+					bone_mapper_buttons[i]->set_state(BoneMapperButton::BONE_MAP_STATE_SET);
+				}
 			} else {
 				bone_mapper_buttons[i]->set_state(BoneMapperButton::BONE_MAP_STATE_ERROR);
 			}
 		} else {
-			bone_mapper_buttons[i]->set_state(BoneMapperButton::BONE_MAP_STATE_UNSET);
+			if (bone_mapper_buttons[i]->is_require()) {
+				bone_mapper_buttons[i]->set_state(BoneMapperButton::BONE_MAP_STATE_MISSING);
+			} else {
+				bone_mapper_buttons[i]->set_state(BoneMapperButton::BONE_MAP_STATE_UNSET);
+			}
 		}
 	}
 }
@@ -371,9 +415,13 @@ void BoneMapEditor::create_editors() {
 }
 
 void BoneMapEditor::fetch_objects() {
+	skeleton = nullptr;
 	// Hackey... but it may be the easist way to get a selected object from "ImporterScene".
 	SceneImportSettings *si = SceneImportSettings::get_singleton();
 	if (!si) {
+		return;
+	}
+	if (!si->is_visible()) {
 		return;
 	}
 	Node *selected = si->get_selected_node();
@@ -396,9 +444,12 @@ void BoneMapEditor::_notification(int p_what) {
 			create_editors();
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
-			remove_child(bone_mapper);
-			bone_mapper->queue_delete();
-		}
+			if (bone_mapper) {
+				remove_child(bone_mapper);
+				bone_mapper->queue_delete();
+			}
+			skeleton = nullptr;
+		} break;
 	}
 }
 
@@ -425,15 +476,24 @@ void EditorInspectorPluginBoneMap::parse_begin(Object *p_object) {
 
 BoneMapEditorPlugin::BoneMapEditorPlugin() {
 	// Register properties in editor settings.
-	EDITOR_DEF("editors/bone_mapper/handle_colors/set", Color(0.1, 0.6, 0.25));
-	EDITOR_DEF("editors/bone_mapper/handle_colors/error", Color(0.8, 0.2, 0.2));
 	EDITOR_DEF("editors/bone_mapper/handle_colors/unset", Color(0.3, 0.3, 0.3));
+	EDITOR_DEF("editors/bone_mapper/handle_colors/set", Color(0.1, 0.6, 0.25));
+	EDITOR_DEF("editors/bone_mapper/handle_colors/missing", Color(0.8, 0.2, 0.8));
+	EDITOR_DEF("editors/bone_mapper/handle_colors/error", Color(0.8, 0.2, 0.2));
 
 	Ref<EditorInspectorPluginBoneMap> inspector_plugin;
 	inspector_plugin.instantiate();
 	add_inspector_plugin(inspector_plugin);
 
+	Ref<PostImportPluginSkeletonTrackOrganizer> post_import_plugin_track_organizer;
+	post_import_plugin_track_organizer.instantiate();
+	add_scene_post_import_plugin(post_import_plugin_track_organizer);
+
 	Ref<PostImportPluginSkeletonRenamer> post_import_plugin_renamer;
 	post_import_plugin_renamer.instantiate();
 	add_scene_post_import_plugin(post_import_plugin_renamer);
+
+	Ref<PostImportPluginSkeletonRestFixer> post_import_plugin_rest_fixer;
+	post_import_plugin_rest_fixer.instantiate();
+	add_scene_post_import_plugin(post_import_plugin_rest_fixer);
 }

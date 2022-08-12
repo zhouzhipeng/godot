@@ -446,7 +446,11 @@ void TextServer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("string_get_word_breaks", "string", "language"), &TextServer::string_get_word_breaks, DEFVAL(""));
 
+	ClassDB::bind_method(D_METHOD("is_confusable", "string", "dict"), &TextServer::is_confusable);
+	ClassDB::bind_method(D_METHOD("spoof_check", "string"), &TextServer::spoof_check);
+
 	ClassDB::bind_method(D_METHOD("strip_diacritics", "string"), &TextServer::strip_diacritics);
+	ClassDB::bind_method(D_METHOD("is_valid_identifier", "string"), &TextServer::is_valid_identifier);
 
 	ClassDB::bind_method(D_METHOD("string_to_upper", "string", "language"), &TextServer::string_to_upper, DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("string_to_lower", "string", "language"), &TextServer::string_to_lower, DEFVAL(""));
@@ -463,12 +467,12 @@ void TextServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(ORIENTATION_VERTICAL);
 
 	/* JustificationFlag */
-	BIND_ENUM_CONSTANT(JUSTIFICATION_NONE);
-	BIND_ENUM_CONSTANT(JUSTIFICATION_KASHIDA);
-	BIND_ENUM_CONSTANT(JUSTIFICATION_WORD_BOUND);
-	BIND_ENUM_CONSTANT(JUSTIFICATION_TRIM_EDGE_SPACES);
-	BIND_ENUM_CONSTANT(JUSTIFICATION_AFTER_LAST_TAB);
-	BIND_ENUM_CONSTANT(JUSTIFICATION_CONSTRAIN_ELLIPSIS);
+	BIND_BITFIELD_FLAG(JUSTIFICATION_NONE);
+	BIND_BITFIELD_FLAG(JUSTIFICATION_KASHIDA);
+	BIND_BITFIELD_FLAG(JUSTIFICATION_WORD_BOUND);
+	BIND_BITFIELD_FLAG(JUSTIFICATION_TRIM_EDGE_SPACES);
+	BIND_BITFIELD_FLAG(JUSTIFICATION_AFTER_LAST_TAB);
+	BIND_BITFIELD_FLAG(JUSTIFICATION_CONSTRAIN_ELLIPSIS);
 
 	/* AutowrapMode */
 	BIND_ENUM_CONSTANT(AUTOWRAP_OFF);
@@ -477,11 +481,11 @@ void TextServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(AUTOWRAP_WORD_SMART);
 
 	/* LineBreakFlag */
-	BIND_ENUM_CONSTANT(BREAK_NONE);
-	BIND_ENUM_CONSTANT(BREAK_MANDATORY);
-	BIND_ENUM_CONSTANT(BREAK_WORD_BOUND);
-	BIND_ENUM_CONSTANT(BREAK_GRAPHEME_BOUND);
-	BIND_ENUM_CONSTANT(BREAK_WORD_BOUND_ADAPTIVE);
+	BIND_BITFIELD_FLAG(BREAK_NONE);
+	BIND_BITFIELD_FLAG(BREAK_MANDATORY);
+	BIND_BITFIELD_FLAG(BREAK_WORD_BOUND);
+	BIND_BITFIELD_FLAG(BREAK_GRAPHEME_BOUND);
+	BIND_BITFIELD_FLAG(BREAK_ADAPTIVE);
 
 	/* VisibleCharactersBehavior */
 	BIND_ENUM_CONSTANT(VC_CHARS_BEFORE_SHAPING);
@@ -498,25 +502,26 @@ void TextServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(OVERRUN_TRIM_WORD_ELLIPSIS);
 
 	/* TextOverrunFlag */
-	BIND_ENUM_CONSTANT(OVERRUN_NO_TRIM);
-	BIND_ENUM_CONSTANT(OVERRUN_TRIM);
-	BIND_ENUM_CONSTANT(OVERRUN_TRIM_WORD_ONLY);
-	BIND_ENUM_CONSTANT(OVERRUN_ADD_ELLIPSIS);
-	BIND_ENUM_CONSTANT(OVERRUN_ENFORCE_ELLIPSIS);
-	BIND_ENUM_CONSTANT(OVERRUN_JUSTIFICATION_AWARE);
+	BIND_BITFIELD_FLAG(OVERRUN_NO_TRIM);
+	BIND_BITFIELD_FLAG(OVERRUN_TRIM);
+	BIND_BITFIELD_FLAG(OVERRUN_TRIM_WORD_ONLY);
+	BIND_BITFIELD_FLAG(OVERRUN_ADD_ELLIPSIS);
+	BIND_BITFIELD_FLAG(OVERRUN_ENFORCE_ELLIPSIS);
+	BIND_BITFIELD_FLAG(OVERRUN_JUSTIFICATION_AWARE);
 
 	/* GraphemeFlag */
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_VALID);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_RTL);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_VIRTUAL);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_SPACE);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_BREAK_HARD);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_BREAK_SOFT);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_TAB);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_ELONGATION);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_PUNCTUATION);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_UNDERSCORE);
-	BIND_ENUM_CONSTANT(GRAPHEME_IS_CONNECTED);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_VALID);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_RTL);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_VIRTUAL);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_SPACE);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_BREAK_HARD);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_BREAK_SOFT);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_TAB);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_ELONGATION);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_PUNCTUATION);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_UNDERSCORE);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_CONNECTED);
+	BIND_BITFIELD_FLAG(GRAPHEME_IS_SAFE_TO_INSERT_TATWEEL);
 
 	/* Hinting */
 	BIND_ENUM_CONSTANT(HINTING_NONE);
@@ -545,6 +550,8 @@ void TextServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(FEATURE_FONT_VARIABLE);
 	BIND_ENUM_CONSTANT(FEATURE_CONTEXT_SENSITIVE_CASE_CONVERSION);
 	BIND_ENUM_CONSTANT(FEATURE_USE_SUPPORT_DATA);
+	BIND_ENUM_CONSTANT(FEATURE_UNICODE_IDENTIFIERS);
+	BIND_ENUM_CONSTANT(FEATURE_UNICODE_SECURITY);
 
 	/* FT Contour Point Types */
 	BIND_ENUM_CONSTANT(CONTOUR_CURVE_TAG_ON);
@@ -556,11 +563,12 @@ void TextServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(SPACING_SPACE);
 	BIND_ENUM_CONSTANT(SPACING_TOP);
 	BIND_ENUM_CONSTANT(SPACING_BOTTOM);
+	BIND_ENUM_CONSTANT(SPACING_MAX);
 
 	/* Font Style */
-	BIND_ENUM_CONSTANT(FONT_BOLD);
-	BIND_ENUM_CONSTANT(FONT_ITALIC);
-	BIND_ENUM_CONSTANT(FONT_FIXED_WIDTH);
+	BIND_BITFIELD_FLAG(FONT_BOLD);
+	BIND_BITFIELD_FLAG(FONT_ITALIC);
+	BIND_BITFIELD_FLAG(FONT_FIXED_WIDTH);
 
 	/* Structured text parser */
 	BIND_ENUM_CONSTANT(STRUCTURED_TEXT_DEFAULT);
@@ -650,7 +658,7 @@ void TextServer::draw_hex_code_box(const RID &p_canvas, int64_t p_size, const Ve
 	}
 }
 
-PackedInt32Array TextServer::shaped_text_get_line_breaks_adv(const RID &p_shaped, const PackedFloat32Array &p_width, int64_t p_start, bool p_once, int64_t /*TextBreakFlag*/ p_break_flags) const {
+PackedInt32Array TextServer::shaped_text_get_line_breaks_adv(const RID &p_shaped, const PackedFloat32Array &p_width, int64_t p_start, bool p_once, BitField<TextServer::LineBreakFlag> p_break_flags) const {
 	PackedInt32Array lines;
 
 	ERR_FAIL_COND_V(p_width.is_empty(), lines);
@@ -687,7 +695,7 @@ PackedInt32Array TextServer::shaped_text_get_line_breaks_adv(const RID &p_shaped
 				}
 				continue;
 			}
-			if ((p_break_flags & BREAK_MANDATORY) == BREAK_MANDATORY) {
+			if (p_break_flags.has_flag(BREAK_MANDATORY)) {
 				if ((l_gl[i].flags & GRAPHEME_IS_BREAK_HARD) == GRAPHEME_IS_BREAK_HARD) {
 					lines.push_back(line_start);
 					lines.push_back(l_gl[i].end);
@@ -701,12 +709,12 @@ PackedInt32Array TextServer::shaped_text_get_line_breaks_adv(const RID &p_shaped
 					continue;
 				}
 			}
-			if ((p_break_flags & BREAK_WORD_BOUND) == BREAK_WORD_BOUND) {
+			if (p_break_flags.has_flag(BREAK_WORD_BOUND)) {
 				if ((l_gl[i].flags & GRAPHEME_IS_BREAK_SOFT) == GRAPHEME_IS_BREAK_SOFT) {
 					last_safe_break = i;
 				}
 			}
-			if ((p_break_flags & BREAK_GRAPHEME_BOUND) == BREAK_GRAPHEME_BOUND) {
+			if (p_break_flags.has_flag(BREAK_GRAPHEME_BOUND)) {
 				last_safe_break = i;
 			}
 		}
@@ -726,7 +734,7 @@ PackedInt32Array TextServer::shaped_text_get_line_breaks_adv(const RID &p_shaped
 	return lines;
 }
 
-PackedInt32Array TextServer::shaped_text_get_line_breaks(const RID &p_shaped, double p_width, int64_t p_start, int64_t /*TextBreakFlag*/ p_break_flags) const {
+PackedInt32Array TextServer::shaped_text_get_line_breaks(const RID &p_shaped, double p_width, int64_t p_start, BitField<TextServer::LineBreakFlag> p_break_flags) const {
 	PackedInt32Array lines;
 
 	const_cast<TextServer *>(this)->shaped_text_update_breaks(p_shaped);
@@ -755,7 +763,7 @@ PackedInt32Array TextServer::shaped_text_get_line_breaks(const RID &p_shaped, do
 				word_count = 0;
 				continue;
 			}
-			if ((p_break_flags & BREAK_MANDATORY) == BREAK_MANDATORY) {
+			if (p_break_flags.has_flag(BREAK_MANDATORY)) {
 				if ((l_gl[i].flags & GRAPHEME_IS_BREAK_HARD) == GRAPHEME_IS_BREAK_HARD) {
 					lines.push_back(line_start);
 					lines.push_back(l_gl[i].end);
@@ -765,16 +773,16 @@ PackedInt32Array TextServer::shaped_text_get_line_breaks(const RID &p_shaped, do
 					continue;
 				}
 			}
-			if ((p_break_flags & BREAK_WORD_BOUND) == BREAK_WORD_BOUND) {
+			if (p_break_flags.has_flag(BREAK_WORD_BOUND)) {
 				if ((l_gl[i].flags & GRAPHEME_IS_BREAK_SOFT) == GRAPHEME_IS_BREAK_SOFT) {
 					last_safe_break = i;
 					word_count++;
 				}
+				if (p_break_flags.has_flag(BREAK_ADAPTIVE) && word_count == 0) {
+					last_safe_break = i;
+				}
 			}
-			if (((p_break_flags & BREAK_WORD_BOUND_ADAPTIVE) == BREAK_WORD_BOUND_ADAPTIVE) && word_count == 0) {
-				last_safe_break = i;
-			}
-			if ((p_break_flags & BREAK_GRAPHEME_BOUND) == BREAK_GRAPHEME_BOUND) {
+			if (p_break_flags.has_flag(BREAK_GRAPHEME_BOUND)) {
 				last_safe_break = i;
 			}
 		}
@@ -794,7 +802,7 @@ PackedInt32Array TextServer::shaped_text_get_line_breaks(const RID &p_shaped, do
 	return lines;
 }
 
-PackedInt32Array TextServer::shaped_text_get_word_breaks(const RID &p_shaped, int64_t p_grapheme_flags) const {
+PackedInt32Array TextServer::shaped_text_get_word_breaks(const RID &p_shaped, BitField<TextServer::GraphemeFlag> p_grapheme_flags) const {
 	PackedInt32Array words;
 
 	const_cast<TextServer *>(this)->shaped_text_update_justification_ops(p_shaped);
@@ -1727,6 +1735,26 @@ Array TextServer::_shaped_text_get_ellipsis_glyphs_wrapper(const RID &p_shaped) 
 	}
 
 	return ret;
+}
+
+bool TextServer::is_valid_identifier(const String &p_string) const {
+	const char32_t *str = p_string.ptr();
+	int len = p_string.length();
+
+	if (len == 0) {
+		return false; // Empty string.
+	}
+
+	if (!is_unicode_identifier_start(str[0])) {
+		return false;
+	}
+
+	for (int i = 1; i < len; i++) {
+		if (!is_unicode_identifier_continue(str[i])) {
+			return false;
+		}
+	}
+	return true;
 }
 
 TextServer::TextServer() {
