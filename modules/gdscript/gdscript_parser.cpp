@@ -3985,7 +3985,7 @@ bool GDScriptParser::rpc_annotation(const AnnotationNode *p_annotation, Node *p_
 				push_error(R"(RPC annotations can only be used once per function.)", p_annotation);
 				return false;
 			}*/
-			
+
 			break;
 		}
 		default:
